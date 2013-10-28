@@ -95,8 +95,47 @@ The available contexts are renamable
 
 
 A bit more about contexts:
---------------------
-[Fill this in later]
+----------------------------
+A context is a specific category of text within a page, with its own revision
+ID and distinct privacy and visibility setting. It's an optional feature
+intended to give structure to a page and allow users to add subjective or 
+personalized content that will be clearly delineated from the main 
+informational content of the page. A brief example is shown below:
+
+
+--> Page Title: ULYSSES
+--> +---------------------------------------------
+--> | Context: Motivations
+--> | Revision ID: 3
+--> | Visible: True
+--> | 
+--> | Research for book report due April 13
+--> +---------------------------------------------
+--> | Context: Main
+--> | Revision ID: 12
+--> | Visible: True
+--> |
+--> | This book describes a day in the life of Leopold Bloom [ ... ]
+--> +---------------------------------------------
+--> | Context: Opinions
+--> | Revision ID: 4
+--> | Visible: False
+--> |
+--> | Week Three: This book weighs on me like a curse.
+--> +---------------------------------------------
+
+Every TOC heading within a page has its own set of contexts; a page without
+any user-added TOCs still has one "main" (invisible) TOC heading enabled. 
+Using contexts gives you the following extra features:
+
+	*	Browse motivations to determine whether a page is still relevant and
+		worth maintaining.
+	*	A page can contain snippets of "related" content rather than spinning
+		off multiple stub-length pages that will be viewed much less
+		frequently.
+	*	Search for keywords on a context-specific basis, e.g. "(research IN
+		Motivations) AND (CPU IN Main)"
+	*	[Add more here]
 
 
 SQL Schema:
@@ -142,23 +181,32 @@ SPACES
 ============================
 
 
+ELEMENT_TYPES
+=================
+| id | name     |
++----+----------+
+| pk | page     |
+|    | list     |
+|    | timeline |
+|    | pearl    |
+=================
+
+
 ELEMENTS
-=================================================
-| id | timestamp | type     | latest | space    |
-+----+-----------+----------+--------+----------+
-| pk | timestamp | page     | rev_id | space_id |
-|    |           | list     |        |          |
-|    |           | timeline |        |          |
-|    |           | pearl    |        |          |
-=================================================
+============================================================
+| id | timestamp | elem_type | title   | latest | space    |
++----+-----------+-----------+---------+--------+----------+
+| pk | timestamp | type_id   | varchar | rev_id | space_id |
+============================================================
+
 
 TOC
-=====================================
-| id | page       | order | name    |
-+----+------------+-------+---------+
-| pk | element_id | 0     | main    |
-|    |            | int   | varchar |
-=====================================
+================================================
+| id | space    | page       | order | name    |
++----+----------+------------+-------+---------+
+| pk | space_id | element_id | 0     | main    |
+|    |          |            | int   | varchar |
+================================================
 
 
 CONTEXT NAMES
@@ -177,24 +225,47 @@ CONTEXT NAMES
 ===========================
 
 
-TOC_TO_CONTEXTS
-============================
-| id | toc    | context    |
-+----+--------+------------+
-| pk | toc_id | context_id |
-============================
+CONTEXTS
+=====================================================================
+| id | space    | page       | toc    | context type    | timestamp |
++----+----------+------------+--------+-----------------+-----------+
+| pk | space_id | element_id | toc_id | context_name_id | timestamp |
+=====================================================================
 
 
-REVISIONS_GLOBAL
-===============================================================================
-| id | space    | element    | toc    | context     | timestamp | revision    |
-+----+----------+------------+--------+-------------+-----------+-------------+
-| pk | space_id | element_id | toc_id | context_id  | timestamp | revision_id |
-===============================================================================
+REVISIONS_ELEMENTS
+========================================================
+| id | space    | element    | timestamp | revision    |
++----+----------+------------+-----------+-------------+
+| pk | space_id | element_id | timestamp | revision_id |
+========================================================
+
+
+REVISIONS_PAGES
+=================================================================
+| id | space    | element    | toc    | context     | timestamp |
++----+----------+------------+--------+-------------+-----------+
+| pk | space_id | element_id | toc_id | context_id  | timestamp |
+=================================================================
+| revision    |
++-------------+
+| revision_id |
+===============
 
 
 REVISIONS
-========================
-| id | 
-+----+-----
-| pk | 
+================
+| id | content |
++----+---------+
+| pk | text    |
+================
+
+
+MEDIA
+======================
+| id | link | object |
++----+------+--------+
+| pk | text | blob   |
+======================
+
+
