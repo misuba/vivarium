@@ -209,20 +209,19 @@ TOC
 ================================================
 
 
-CONTEXT NAMES
-===========================
-| id | order | name       |
-+----+-------+------------+
-| pk | int   | main       |
-|    |       | basics     |
-|    |       | motivation |
-|    |       | opinions   |
-|    |       | social     |
-|    |       | xcredit    |
-|    |       | summary    |
-|    |       | abstract   |
-|    |       | varchar    |
-===========================
+CONTEXT_TYPES
+=============================
+| id | ordinal | name       |
++----+---------+------------+
+| pk | int     | main       |
+|    |         | abstract   |
+|    |         | summary    |
+|    |         | basics     |
+|    |         | motivation |
+|    |         | opinions   |
+|    |         | social     |
+|    |         | xcredit    |
+=============================
 
 
 CONTEXTS
