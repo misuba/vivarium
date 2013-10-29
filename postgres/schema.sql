@@ -10,7 +10,7 @@ create table users (
 create table spaces (
 	id serial primary key,
 	created timestamp not null default now(),
-	title varchar(100) not null CONSTRAINT unique_title UNIQUE,
+	title varchar(100) not null CONSTRAINT unique_title UNIQUE
 );
 
 -- Elements are allowed to be: pages, lists, timelines, or pearls
@@ -31,16 +31,15 @@ INSERT INTO element_types (id, type_name) VALUES
 create table elements (
 	id serial primary key,
 	created timestamp not null default now(),
-	space_id REFERENCES spaces ON DELETE CASCADE,
-	element_type REFERENCES element_types ON DELETE RESTRICT,
-	title varchar(100) default 'pearl_element',
-	-- latest REFERENCES element_revisions	-- table not created yet
+	space_id integer unique REFERENCES spaces ON DELETE CASCADE,
+	element_type integer unique REFERENCES element_types ON DELETE RESTRICT,
+	title varchar(100) default 'pearl_element'
 );
 
 create table toc (
 	id serial primary key,
 	created timestamp not null default now(),
-	element_id REFERENCES elements ON DELETE CASCADE,
+	element_id integer unique REFERENCES elements ON DELETE CASCADE,
 	ordinal integer default 0,
 	name varchar(500)
 );
@@ -65,15 +64,15 @@ INSERT INTO context_types (id, ordinal, type_name) VALUES
 create table contexts (
 	id serial primary key,
 	created timestamp not null default now(),
-	toc_id REFERENCES toc ON DELETE CASCADE,
-	context_type REFERENCES context_types ON DELETE RESTRICT
+	toc_id integer unique REFERENCES toc ON DELETE CASCADE,
+	context_type integer unique REFERENCES context_types ON DELETE RESTRICT,
 	content text
 );
 
 create table revisions (
 	id serial primary key,
 	created timestamp not null default now(),
-	context_id REFERENCES(contexts),
+	context_id integer unique REFERENCES contexts,
 	action varchar(100),
 	content text
 );
