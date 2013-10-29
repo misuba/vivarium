@@ -73,4 +73,4 @@ create table contexts (
 	context_type REFERENCES context_types ON DELETE RESTRICT,
 	CONSTRAINT appropriate_context_type 
 	CHECK (context_type = 1 OR context_type > 3)
-	);
+);
