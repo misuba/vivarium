@@ -12,6 +12,7 @@ create table spaces (
 	created timestamp not null default now(),
 	title varchar(100) not null CONSTRAINT unique_title UNIQUE
 );
+/* comment comment */
 
 -- Elements are allowed to be: pages, lists, timelines, or pearls
 -- NOTE: this table has already been created
@@ -31,8 +32,8 @@ INSERT INTO element_types (id, type_name) VALUES
 create table elements (
 	id serial primary key,
 	created timestamp not null default now(),
-	space_id integer unique REFERENCES spaces ON DELETE CASCADE,
-	element_type integer unique REFERENCES element_types ON DELETE RESTRICT,
+	space_id integer REFERENCES spaces ON DELETE CASCADE,
+	element_type integer REFERENCES element_types ON DELETE RESTRICT,
 	title varchar(100) default 'pearl_element'
 );
 
@@ -64,37 +65,35 @@ INSERT INTO context_types (id, ordinal, type_name) VALUES
 create table contexts (
 	id serial primary key,
 	created timestamp not null default now(),
-	toc_id integer unique REFERENCES toc ON DELETE CASCADE,
-	context_type integer unique REFERENCES context_types ON DELETE RESTRICT,
+	toc_id integer REFERENCES toc ON DELETE CASCADE,
+	context_type integer REFERENCES context_types ON DELETE RESTRICT,
 	content text
 );
 
 create table revisions (
 	id serial primary key,
 	created timestamp not null default now(),
-	context_id integer unique REFERENCES contexts,
+	context_id integer REFERENCES contexts,
 	action varchar(100),
 	content text
 );
 
-CREATE OR REPLACE FUNCTION revisions_function() RETURNS trigger AS '
+CREATE OR REPLACE FUNCTION revisions_function() RETURNS trigger AS $revisions_function$
 BEGIN
-	IF tg_op = ''DELETE'' THEN
-		INSERT INTO revisions (context_id, content, action) VALUES (old.context_id, old.content, ''DELETE'');
-		RETURN old;
+	IF (tg_op = 'DELETE') THEN
+		INSERT INTO revisions (context_id, content, action) VALUES (old.id, old.content, 'DELETE');
+		RETURN OLD;
+	ELSIF (tg_op = 'INSERT') THEN
+		INSERT INTO revisions (context_id, content, action) VALUES (new.id, new.content, 'INSERT');
+		RETURN NEW;
+	ELSIF (tg_op = 'UPDATE') THEN
+		INSERT INTO revisions (context_id, content, action) VALUES (new.id, new.content, 'UPDATE');
+		RETURN NEW;
 	END IF;
-	IF tg_op = ''INSERT'' THEN
-		INSERT INTO revisions (context_id, content, action) VALUES (new.context_id, new.content, ''INSERT'');
-		RETURN new;
-	END IF;
-	IF tg_op = ''UPDATE'' THEN
-		INSERT INTO revisions (context_id, content, action) VALUES (old.context_id, old.content, ''UPDATE'');
-		RETURN new;
-	END IF;
-END
-' LANGUAGE plpgsql;
+	RETURN NULL;
+END;
+$revisions_function$ LANGUAGE plpgsql;
 
 CREATE TRIGGER revisions_trigger
 AFTER INSERT OR DELETE OR UPDATE ON contexts
-FOR each ROW EXECUTE PROCEDURE
-	revisions_function();
+FOR EACH ROW EXECUTE PROCEDURE revisions_function();
