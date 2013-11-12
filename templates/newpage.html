@@ -1,0 +1,12 @@
+{% extends 'background.html' %}
+
+{% block body %}
+
+<h1>Add a new page: </h1><br>
+<form id='add_page' method='post' action='/success'>
+  <p> Title: <br><input type='text' name='title' maxlength='255'> </p><br>
+  <p> Content:<br> <textarea name='content' class='small' > </textarea></p><br>
+  <p> <input type='submit' value='Okay'> </p>
+</form>
+
+{% endblock %}

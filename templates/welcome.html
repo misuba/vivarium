@@ -1,0 +1,16 @@
+{% extends 'background.html' %}
+
+{% block body %}
+
+<h1>Vivarium</h1><br>
+
+<p>Welcome. Here are your most recent pages:</p><br>
+
+{% for summary in summaries %}
+{% set pagetitle = summary[1] %}
+<p><strong><a href={{ url_for('show_page', title=pagetitle) }}> {{summary[1]}}: </a></strong></p>
+<p> {{summary[2]}} </p>
+<p class=created> Created on: {{summary[0]}}</p>
+{% endfor %}
+
+{% endblock %}

@@ -1,0 +1,12 @@
+{% extends 'background.html' %}
+
+{% block body %}
+
+{% for summary in summaries %}
+{% set pagetitle = summary[1] %}
+<h1>{{pagetitle}}</h1><br>
+<p> {{summary[2]}} </p>
+<p class=created> Created on: {{summary[0]}}</p>
+{% endfor %}
+
+{% endblock %}
