@@ -1,0 +1,137 @@
+/* ====================
+/* For Sticky Footers
+/* http://www.cssstickyfooter.com/ */
+
+* {
+	margin: 0;
+	padding: 0;}
+
+html, body {
+	height: 100%;
+}
+
+.wrap {
+	min-height: 100%;
+}
+
+.main {
+	overflow:auto;
+	padding-bottom: 45px;}  /* must be same height as the footer */
+
+.footer {
+	position: relative;
+	text-align: right;
+	font-size: 90%;
+	padding-right: 1%;
+	margin-top: -45px; /* negative value of footer height */
+	height: 45px;
+	clear:both;
+}
+
+/* Opera Fix */
+body:before {
+	content: '';
+	height: 100%;
+	float: left;
+	width: 0;
+	margin-top: -32767px;/
+}
+
+/* ====================
+/* Body Formatting */
+
+body {
+	font-family: sans-serif;
+	background: #eee;
+}
+
+/* ====================
+/* Type Formatting */
+
+p, ul, ol {
+	line-height: 1.5em;
+	/* padding-bottom: 1.5em; */
+}
+
+.created {
+	color: #777;
+	font-size: 0.9em;
+}
+
+a {
+	color: #377BA8;
+	text-decoration: none;
+}
+
+a:hover { text-decoration:underline; }
+a:visited { color: #333333; }
+a:active { color: red; }
+
+.small {
+	width: 100%;
+	height: 10em;
+	padding: 5px;
+}
+
+.full {
+	width: 100%;
+	height: 20em;
+	padding: 5px;
+}
+
+h1 {
+	font-size: 1.5em;
+	line-height: 1.5em;
+	font-family: 'Georgia', serif;
+	color: #555;
+	border-bottom: 2px solid #eee;
+	padding-top: 1em;
+}
+
+h2 {
+	font-size: 1.1em;
+	line-height: 1.5em;
+	font-family: 'Georgia', serif;
+	color: #555;
+	padding-top: 1em;
+}
+
+/* ====================
+/* Page Elements */
+
+.header {
+	height: 10%;
+}
+
+.sidebar {
+	position: absolute;
+	left: 0;
+	border: 10px;
+	width: 15%;
+	padding: 0.8em;
+}
+
+.page {
+	position: relative;
+	left: 15%;
+	width: 35em;
+	border: 5px solid #b58900;
+	padding: 0.8em;
+	background-color: white;
+}
+
+.entries {
+	left: 15%;
+	padding: 5px;
+}
+
+.flash {
+	background: #CEE5F5;
+	padding: 0.5em;
+	border: 1px solid #AACBE2;
+}
+
+.error {
+	background: #F0D6D6;
+	padding: 0.5em;
+}
