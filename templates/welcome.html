@@ -10,7 +10,7 @@
 {% set pagetitle = summary[1] %}
 <p><strong><a href={{ url_for('show_page', title=pagetitle) }}> {{summary[1]}}: </a></strong></p>
 <p> {{summary[2]}} </p>
-<p class=created> Created on: {{summary[0]}}</p>
+<p class=created>{{summary[0]}}</p><br>
 {% endfor %}
 
 {% endblock %}

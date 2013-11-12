@@ -2,6 +2,15 @@
 
 {% block body %}
 
-<h1>Vivarium</h1><br>
+<h1>All Pages</h1><br>
+
+<ul>
+{% for summary in summaries %}
+{% set pagetitle = summary[1] %}
+<p><strong><a href={{ url_for('show_page', title=pagetitle) }}>{{summary[1]}}</a></strong></p>
+<p>{{summary[2]}}</p>
+<p class=created>{{summary[0]}}</p><br>
+{% endfor %}
+</ul>
 
 {% endblock %}
