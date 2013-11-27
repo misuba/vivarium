@@ -11,51 +11,6 @@ conn_string = "host = 'localhost' dbname = 'vivarium' user='mtoth'"
 conn = psycopg2.connect(conn_string)
 cursor = conn.cursor()
 
-# takes form input, returns a list of SQL insert statements
-def addPageSQL(d):
-	#
-	# Step 1: convert form input into Template-ready dictionary
-	# ---------------------------------------------------------
-	clean = vq.cleanFormInput(d)
-	element_title = clean.pop('title')	# get title of element
-	element_title = "'" + element_title + "'"
-	# to do: change hardcoded space_id
-	# to do: change hardcoded element_type
-	element_sql = 'INSERT INTO elements (space_id, element_type, title) VALUES (1, 1, {0})'.format(element_title)
-	cursor.execute(element_sql)
-	conn.commit()
-	#
-	# Step 2: fetch id from the newly created element, for use in toc insert SQL
-	# ---------------------------------------------------------
-	get_element_id = 'SELECT id FROM elements WHERE title = {0}'.format(element_title)
-	cursor.execute(get_element_id)
-	# can we tighten this up at all? 
-	element_id = cursor.fetchall()
-	element_id = [i[0] for i in element_id]
-	element_id = element_id[0]
-	# now we create the main toc element; it can be edited later
-	toc_sql = "INSERT INTO toc (element_id, ordinal, name) VALUES ({0}, 0, 'main')".format(element_id)
-	cursor.execute(toc_sql)
-	conn.commit()
-	#
-	# Step 3: create all context elements tied to the main toc element
-	# ---------------------------------------------------------
-	get_toc_id = 'SELECT id FROM toc WHERE element_id = {0}'.format(element_id)
-	cursor.execute(get_toc_id)
-	toc_id = cursor.fetchall()
-	toc_id = [i[0] for i in toc_id]
-	toc_id = toc_id[0]
-	context_sql = "INSERT INTO contexts (toc_id, context_type, content) VALUES "
-	c = ''
-	for item in clean.keys():
-		context_loop = toc_id, int(item), clean[item]
-		c = c + str(context_loop) + ', '
-	c = c[:-2]
-	context_sql = context_sql + c
-	cursor.execute(context_sql)
-	conn.commit()
-
-
 @viv.route('/')
 def welcome():
 	all_pages_sql = vq.cleanSQL(vq.all_pages)
@@ -64,10 +19,15 @@ def welcome():
 	# all_pages: SELECT e.created, e.title, c.content [. . .]
 	records = cursor.fetchall()
 	for entry in records:
-		timestamp, title, content = entry
-		summary = [timestamp, title, content]
+		created, title = entry
+		summary = [created, title]
 		summaries.append(summary)
 	return render_template('welcome.html', summaries=summaries)
+
+@viv.route('/jscript')
+def java():
+	# return url_for('static', filename='data.tsv')
+	return("This isn't ready for prime time yet. Sorry!")
 
 @viv.route('/all')
 def all_pages():
@@ -76,14 +36,22 @@ def all_pages():
 	summaries = []
 	records = cursor.fetchall()
 	for entry in records:
-		timestamp, title, content = entry
-		summary = [timestamp, title, content]
+		timestamp, title = entry
+		summary = [timestamp, title]
 		summaries.append(summary)
 	return render_template('all_pages.html', summaries=summaries)
 
 @viv.route('/new_page')
 def newpage():
 	return render_template('newpage.html')
+
+@viv.route('/new_list')
+def newlist():
+	return render_template('newlist.html')
+
+@viv.route('/edit/<title>', methods=['GET','POST'])
+def edit_context(title):
+	return render_template('nope.html')
 
 @viv.route('/page/<title>', methods=['GET','POST'])
 def show_page(title):
@@ -92,31 +60,40 @@ def show_page(title):
 		one_page = Template(one_page)
 		one_page_sql = one_page.substitute(what=title)
 		cursor.execute(one_page_sql)
-		summaries = []
+		element = {}
+		contexts = {}
 		records = cursor.fetchall()
 		for entry in records:
-			timestamp, title, content = entry
-			summary = [timestamp, title, content]
-			summaries.append(summary)
-		return render_template('one_page.html', summaries=summaries)
+			e_ts, e_title, c_ts, c_title, ordinal, content = entry
+			element['title'] = e_title
+			element['timestamp'] = e_ts.strftime('%m/%d/%Y, %I:%M:%S %p')
+			contexts[ordinal] = [c_ts.strftime('%m/%d/%Y, %I:%M:%S %p'), c_title, content]
+		return render_template('one_page.html', e = element, summaries=contexts)
 	else:
 		return('POST method!')
 
-@viv.route('/success', methods=['POST'])
+@viv.route('/success', methods=['GET','POST'])
 def success():
-	if request.method == 'POST':
-		f = request.form
-		form_id = str(f['form_id'])
-		if form_id == 'add_page':
-			addPageSQL(f)
-			return redirect(url_for('all_pages'))
-		else:
-			return('You cannot yet POST a form that is not add_page')
-		# new_page = vq.cleanSQL(vq.new_page)
-		# new_page_sql = new_page.substitute
-		# cursor.execute(new_page_sql)
-		# db.commit()
-		# return redirect(url_for('show_page', title=request.form['title']))
+	render_template('nope.html')
+	# if request.method == 'GET':
+	# 	render_template('nope.html')
+	# else:
+	# 	d = request.form
+	# 	form_dict = {}
+	# 	for key in d.keys():
+	# 	    for value in d.getlist(key):
+	# 	    	form_dict[key] = str(value)
+	# 	render_template('simple.html')
+	# form_dict.pop('form_id', None)			# remove form_id from dict
+	# return form_dict
+	# if form_id == 'add_page':
+	# 	cleand = addPageSQL(f)
+	# 	# s = str(cleand)
+	# 	# return(s)
+	# 	return redirect(url_for('all_pages'))
+	# elif form_id == 'add_list':
+		# cleand = addListSQL(f)
+		# return(f)
 
 if __name__ == "__main__":
 	viv.run(debug = True)

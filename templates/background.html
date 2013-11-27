@@ -1,7 +1,17 @@
-<link rel=stylesheet type=text/css href=
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN">
+<html lang="en">
+<head>
+
+	<link rel=stylesheet type=text/css href=
 "{{ url_for('static', filename='style.css') }}">
 
+	<script type='text/javascript' src=
+"{{ url_for('static', filename='d3/d3.js') }}"></script>
+
+</head>
+<body>
 <div class=wrap>
+
 	{% include 'header.html' %}
 	<div class=main>
 
@@ -19,3 +29,6 @@
 {% include 'footer.html' %}
 
 </div>
+
+</body>
+</html>

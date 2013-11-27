@@ -13,9 +13,8 @@ progress.
 
 Status
 --------------------
-I just wrote this much README, and I'm going to push it to GitHub. The next
-step is to fill out more of the SQL schema and implement it in SQLite.
-Everything that follows below is a hopeful description of what is to come.
+Flask is now interacting with a Postgres backend to add and display pages.
+I'm torn between adding lists or writing a link parser as my next step.
 
 
 Basic Objects

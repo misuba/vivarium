@@ -45,17 +45,29 @@ body {
 	background: #eee;
 }
 
+.myCanvas {
+	position:fixed; top:0;left:0;
+}
+
 /* ====================
 /* Type Formatting */
 
-p, ul, ol {
+p {
 	line-height: 1.5em;
 	/* padding-bottom: 1.5em; */
 }
 
-.created {
-	color: #777;
-	font-size: 0.9em;
+ul, ol, li {
+	line-height: 1.5em;
+}
+
+li {
+	margin-left: 1em;
+	padding-left: 0.5em;
+}
+
+hr {
+	color: #eee;
 }
 
 a {
@@ -96,6 +108,63 @@ h2 {
 	padding-top: 1em;
 }
 
+.page_title {
+	/* basically everything about h1 except the border */
+	font-size: 1.5em;
+	line-height: 1.5em;
+	font-family: 'Georgia', serif;
+	color: #555;
+	padding-top: 0.5em;
+}
+
+.subtitle {
+	font-size: 1em;
+	line-height: 1.5em;
+	font-family: 'Georgia', serif;
+	color: #555;
+	border-bottom: 2px solid #eee;
+}
+
+.context_title {
+	font-size: 1em;
+	line-height: 1.5em;
+	font-family: 'Georgia', serif;
+	color: #555;
+	padding-top: 0.5em;
+	padding-bottom: 0.5em;
+}
+
+.context_content {
+	font-size: 1em;
+	line-height: 1.5em;
+	font-family: 'Georgia', serif;
+}
+
+.created {
+	color: #777;
+	font-size: 0.9em;
+	padding-top: 1em;
+}
+
+/* ====================
+/* SVG Elements */
+
+.svg_div {
+	height: 200px;
+	width: 100%;
+	overflow: scroll;
+}
+
+svg {
+	border: 3px dotted #ccc;
+}
+
+rect {
+	fill: steelblue;
+	stroke: black;
+}
+
+
 /* ====================
 /* Page Elements */
 
@@ -115,7 +184,7 @@ h2 {
 	position: relative;
 	left: 15%;
 	width: 35em;
-	border: 5px solid #b58900;
+	border: 5px solid #b58900;	/* Solarized Light: yellow */
 	padding: 0.8em;
 	background-color: white;
 }
@@ -123,6 +192,17 @@ h2 {
 .entries {
 	left: 15%;
 	padding: 5px;
+}
+
+.header_align {
+	float: right;
+	padding-top: 2em;
+}
+
+textarea {
+    min-width: 100%;
+    max-width: 100%; 
+    max-height: 100%;
 }
 
 .flash {

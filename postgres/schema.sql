@@ -37,10 +37,36 @@ create table elements (
 	title varchar(100) default 'pearl_element'
 );
 
+create table list_nodes (
+	id serial primary key,
+	element_id integer,
+	title varchar(100) not null,
+	subtitle varchar(500),
+	content text
+);
+
+create table list_relationship_types (
+	id serial primary key,
+	type_name varchar(20) not null
+);
+
+INSERT INTO list_relationship_types (id, type_name) VALUES 
+	(1, 'parent'),
+	(2, 'child'),
+	(3, 'sibling');
+
+create table list_relationships (
+	id serial primary key,
+	left_node integer references list_nodes ON DELETE CASCADE,
+	right_node integer references list_nodes ON DELETE CASCADE,
+	relationship integer references list_relationship_types ON DELETE RESTRICT,
+	CONSTRAINT consistent_node_order CHECK (left_node < right_node)
+);
+
 create table toc (
 	id serial primary key,
 	created timestamp not null default now(),
-	element_id integer unique REFERENCES elements ON DELETE CASCADE,
+	element_id integer REFERENCES elements ON DELETE CASCADE,
 	ordinal integer default 0,
 	name varchar(500)
 );

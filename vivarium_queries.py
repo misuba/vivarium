@@ -19,23 +19,20 @@ def cleanFormInput(d):
 	return form_dict
 
 all_pages = '''
-	SELECT e.created, e.title, c.content
+	SELECT e.created, e.title
 		FROM elements e
-		INNER JOIN toc t ON e.id = t.element_id
-		INNER JOIN contexts c ON t.id = c.toc_id
-		WHERE t.name = 'main' AND c.context_type = 1
+		INNER JOIN pages_to_contexts p ON p.page_id = e.id
+		INNER JOIN contexts c ON c.id = p.context_id
 	'''
 
 one_page = '''
-	SELECT e.created, e.title, c.content 
+	SELECT e.created AS e_ts, e.title AS e_title, c.created AS c_ts, 
+			c.title AS c_title, c.ordinal, c.content
 		FROM elements e
-		INNER JOIN toc t ON e.id = t.element_id
-		INNER JOIN contexts c ON t.id = c.toc_id
-		WHERE t.name = 'main' AND e.title = '$what'
-	'''
-
-toc_insert = '''
-	INSERT INTO toc (element_id, ordinal, name) VALUES
+		INNER JOIN pages_to_contexts p ON p.page_id = e.id
+		INNER JOIN contexts c ON c.id = p.context_id
+		WHERE e.title = '$what' 
+		ORDER BY c.ordinal ASC 
 	'''
 
 context_insert = '''

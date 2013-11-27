@@ -2,11 +2,18 @@
 
 {% block body %}
 
-{% for summary in summaries %}
-{% set pagetitle = summary[1] %}
-<h1>{{pagetitle}}</h1><br>
-<p> {{summary[2]}} </p>
-<p class=created> Created on: {{summary[0]}}</p>
+<p class=page_title>{{e['title']}}</p>
+{% if 2 in summaries.keys() %}
+<p class=subtitle> {{summaries[2][-1]}} </p><br>
+{% endif %}
+
+{% for item in summaries.keys() %}
+{% if item > 2 %}
+<p class=context_title> {{summaries[item][1]}} </p>
+<p class=context_content> {{summaries[item][2]}} </p>
+{% endif %}
 {% endfor %}
+
+<p class=created> Page created: {{e['timestamp']}}</p><br>
 
 {% endblock %}
