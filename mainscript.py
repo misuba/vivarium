@@ -4,6 +4,8 @@ from string import Template
 import vivarium_queries as vq
 
 viv = Flask(__name__)
+viv.jinja_options = viv.jinja_options.copy()
+viv.jinja_options['extensions'].append('jinja2.ext.with_')
 
 # postgres connection
 # move this to a separate configuration file
@@ -15,13 +17,24 @@ cursor = conn.cursor()
 def welcome():
 	all_pages_sql = vq.cleanSQL(vq.all_pages)
 	cursor.execute(all_pages_sql)
+	page_records = cursor.fetchall()
+	all_subtitles_sql = vq.cleanSQL(vq.all_subtitles)
+	cursor.execute(all_subtitles_sql)
+	subtitle_records = cursor.fetchall()
+	subtitles = {}
 	summaries = []
-	# all_pages: SELECT e.created, e.title, c.content [. . .]
-	records = cursor.fetchall()
-	for entry in records:
+	for entry in subtitle_records:
+		e_title, subtitle = entry
+		subtitles[e_title] = subtitle
+	for entry in page_records:
 		created, title = entry
-		summary = [created, title]
-		summaries.append(summary)
+		if title in subtitles.keys():
+			sub = subtitles[title]
+			summary = [created.strftime('%m/%d/%Y, %I:%M:%S %p'), title, sub]
+			summaries.append(summary)
+		else:
+			summary = [created.strftime('%m/%d/%Y, %I:%M:%S %p'), title]
+			summaries.append(summary)
 	return render_template('welcome.html', summaries=summaries)
 
 @viv.route('/jscript')

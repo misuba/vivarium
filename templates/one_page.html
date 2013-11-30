@@ -2,18 +2,41 @@
 
 {% block body %}
 
+<div class="header_align"> <form>
+	<input name='button' type='button' value='Edit'></form> </div>
 <p class=page_title>{{e['title']}}</p>
 {% if 2 in summaries.keys() %}
 <p class=subtitle> {{summaries[2][-1]}} </p><br>
+{% else %} <hr><br>
 {% endif %}
 
-{% for item in summaries.keys() %}
+{% for item in summaries %}
 {% if item > 2 %}
+<div id="showContext">
+<div class="no_align"> <input name='button' type='button' value='Edit' onclick="toggleDiv('editContext', 'showContext')"> </div>
 <p class=context_title> {{summaries[item][1]}} </p>
 <p class=context_content> {{summaries[item][2]}} </p>
+</div>
 {% endif %}
 {% endfor %}
 
+<div id="editContext" style="display: none;">
+<form id='edit_context' method='post' action='/edit_success'>
+<div class="header_align"> <input type='submit' value='Save'> <input type='button' value='Cancel' onclick="toggleDiv('showContext', 'editContext')"> </div>
+</form>
+{% with summaries = summaries[3] %}
+{% include 'edit_context.html' ignore missing %}
+{% endwith %}
+</div>
+
+<br>
 <p class=created> Page created: {{e['timestamp']}}</p><br>
+
+<script>
+function toggleDiv(show, hide) {
+	document.getElementById(show).style.display="block";
+	document.getElementById(hide).style.display="none";
+}
+</script>
 
 {% endblock %}
