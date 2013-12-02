@@ -1,10 +1,11 @@
-import psycopg2
-from flask import Flask, url_for, render_template, request, redirect, flash, g
+import psycopg2, re
+from flask import Flask, url_for, render_template, request, redirect
 from string import Template
 import vivarium_queries as vq
 
 viv = Flask(__name__)
 viv.jinja_options = viv.jinja_options.copy()
+# the 'with' extension creates a nested scope for context editing
 viv.jinja_options['extensions'].append('jinja2.ext.with_')
 
 # postgres connection
@@ -27,6 +28,8 @@ def hasContentChanged(clean):
 	else:
 		return True
 
+# Page rendering functions:
+#
 @viv.route('/')
 def welcome():
 	all_pages_sql = vq.cleanSQL(vq.all_pages)
@@ -54,6 +57,7 @@ def welcome():
 @viv.route('/jscript')
 def java():
 	# return url_for('static', filename='data.tsv')
+	return render_template('jscript.html')
 	return("This isn't ready for prime time yet. Sorry!")
 
 @viv.route('/all')
@@ -80,25 +84,49 @@ def newlist():
 def edit_context(title):
 	return render_template('nope.html')
 
+def process_links(match):
+	word = match.group(1)
+	url_stem = 'http://localhost:5000'
+	return "<a href=\"" + url_stem + "/page/" + word + "\">" + word + "</a>"
+
+def process_text(s):
+	decoded = s.decode('utf-8')
+	# convert [[links]] into real links
+	match = r"\[\[(.+?)\]\]"
+	linked = re.sub(match, process_links, decoded)
+	return linked
+
+def context_data(title):
+	cursor.execute(vq.context_info, [title])
+	records = cursor.fetchall()
+	c = {}
+	for entry in records:
+		id, ordinal, created, title, rawcontent = entry
+		# data processing/formatting
+		created = created.strftime('%m/%d/%Y, %I:%M:%S %p')
+		content = process_text(rawcontent)
+		c[ordinal] = [created, title, content, id]
+	return c
+
+def element_data(title):
+	cursor.execute(vq.element_info, [title])
+	records = cursor.fetchone()
+	element_ts = records[0].strftime('%m/%d/%Y, %I:%M:%S %p')
+	element_title = records[1]
+	return {'timestamp': element_ts, 'title': element_title}
+
 @viv.route('/page/<title>', methods=['GET','POST'])
 def show_page(title):
 	if request.method == 'GET':
-		one_page = vq.cleanSQL(vq.one_page)
-		one_page = Template(one_page)
-		one_page_sql = one_page.substitute(what=title)
-		cursor.execute(one_page_sql)
-		element = {}
-		contexts = {}
-		records = cursor.fetchall()
-		for entry in records:
-			e_ts, e_title, c_ts, c_title, ordinal, content, id = entry
-			content = content.decode('utf-8')
-			element['title'] = e_title
-			element['timestamp'] = e_ts.strftime('%m/%d/%Y, %I:%M:%S %p')
-			contexts[ordinal] = [c_ts.strftime('%m/%d/%Y, %I:%M:%S %p'), c_title, content, id]
-		return render_template('one_page.html', e = element, summaries=contexts)
+		e = element_data(title)
+		c = context_data(title)
+		return render_template('one_page.html', e = e, summaries=c)
 	else:
 		return('POST method!')
+
+@viv.route('/page/<title>/add')
+def add_context(title):
+	return(title)
 
 @viv.route('/success', methods=['GET','POST'])
 def success():
