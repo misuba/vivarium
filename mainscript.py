@@ -13,6 +13,20 @@ conn_string = "host = 'localhost' dbname = 'vivarium' user='mtoth'"
 conn = psycopg2.connect(conn_string)
 cursor = conn.cursor()
 
+# Housekeeping functions with database queries:
+#
+def hasContentChanged(clean):
+	''' returns True if new content differs from old content, and False otherwise'''
+	context_id = clean['id']
+	newContent = clean['content'].strip()
+	oldContentSQL = "SELECT content FROM contexts WHERE id = {0}".format(context_id)
+	cursor.execute(oldContentSQL)
+	oldContent = cursor.fetchone()[0].strip()	# don't count trailing space as an edit
+	if oldContent == newContent:
+		return False
+	else:
+		return True
+
 @viv.route('/')
 def welcome():
 	all_pages_sql = vq.cleanSQL(vq.all_pages)
@@ -77,36 +91,38 @@ def show_page(title):
 		contexts = {}
 		records = cursor.fetchall()
 		for entry in records:
-			e_ts, e_title, c_ts, c_title, ordinal, content = entry
+			e_ts, e_title, c_ts, c_title, ordinal, content, id = entry
+			content = content.decode('utf-8')
 			element['title'] = e_title
 			element['timestamp'] = e_ts.strftime('%m/%d/%Y, %I:%M:%S %p')
-			contexts[ordinal] = [c_ts.strftime('%m/%d/%Y, %I:%M:%S %p'), c_title, content]
+			contexts[ordinal] = [c_ts.strftime('%m/%d/%Y, %I:%M:%S %p'), c_title, content, id]
 		return render_template('one_page.html', e = element, summaries=contexts)
 	else:
 		return('POST method!')
 
 @viv.route('/success', methods=['GET','POST'])
 def success():
-	render_template('nope.html')
-	# if request.method == 'GET':
-	# 	render_template('nope.html')
-	# else:
-	# 	d = request.form
-	# 	form_dict = {}
-	# 	for key in d.keys():
-	# 	    for value in d.getlist(key):
-	# 	    	form_dict[key] = str(value)
-	# 	render_template('simple.html')
-	# form_dict.pop('form_id', None)			# remove form_id from dict
-	# return form_dict
-	# if form_id == 'add_page':
-	# 	cleand = addPageSQL(f)
-	# 	# s = str(cleand)
-	# 	# return(s)
-	# 	return redirect(url_for('all_pages'))
-	# elif form_id == 'add_list':
-		# cleand = addListSQL(f)
-		# return(f)
+	if request.method == 'GET':
+		render_template('nope.html')
+	else:
+		input = request.form
+		clean = vq.cleanFormInput(input)
+		e_title = clean.pop('e_title', None)
+		r = hasContentChanged(clean)
+		if r == "yes":
+			updateSQL = vq.updateContext(clean)
+			cursor.execute(updateSQL)
+			conn.commit()
+			return redirect(url_for('show_page', title=e_title))
+		else:
+			if 'title' in clean.keys():
+				sqlString = vq.updateContext(clean)
+				cursor.execute(sqlString)
+				conn.commit()
+				return redirect(url_for('show_page', title=e_title))
+			else:
+				return redirect(url_for('show_page', title=e_title))
+
 
 if __name__ == "__main__":
 	viv.run(debug = True)
