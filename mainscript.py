@@ -109,18 +109,29 @@ def success():
 		clean = vq.cleanFormInput(input)
 		e_title = clean.pop('e_title', None)
 		r = hasContentChanged(clean)
-		if r == "yes":
-			updateSQL = vq.updateContext(clean)
-			cursor.execute(updateSQL)
-			conn.commit()
-			return redirect(url_for('show_page', title=e_title))
+		if r == True:
+			c_id = clean.pop('id', None)
+			if clean.keys() == ['content']:	
+				# this is a content-only update
+				updateSQL = '''UPDATE contexts SET content = %(content)s WHERE id = {0}'''.format(c_id)
+				cursor.execute(updateSQL, clean)
+				conn.commit()
+				return redirect(url_for('show_page', title=e_title))
+			elif 'title' in clean.keys():
+				# this is a content + title update
+				updateSQL = '''UPDATE contexts SET (content, title) = (%(content)s, %(title)s) WHERE id = {0}'''.format(c_id)
+				cursor.execute(updateSQL, clean)
+				conn.commit()
+				return redirect(url_for('show_page', title=e_title))
 		else:
 			if 'title' in clean.keys():
-				sqlString = vq.updateContext(clean)
-				cursor.execute(sqlString)
+				# this is a title-only update
+				updateSQL = '''UPDATE contexts SET title = %(title)s WHERE id = {0}'''.format(c_id)
+				cursor.execute(updateSQL, clean)
 				conn.commit()
 				return redirect(url_for('show_page', title=e_title))
 			else:
+				# nothing has changed; redirect back to page
 				return redirect(url_for('show_page', title=e_title))
 
 
