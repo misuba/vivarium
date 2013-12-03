@@ -58,12 +58,13 @@ p {
 }
 
 ul, ol, li {
+	list-style-position: inside;
 	line-height: 1.5em;
 }
 
 li {
-	margin-left: 1em;
-	padding-left: 0.5em;
+	list-style-position: inside;
+	padding-left: 0.5em;  
 }
 
 hr {
