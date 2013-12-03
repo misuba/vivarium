@@ -2,37 +2,110 @@
 
 {% block body %}
 
-<div class="header_align"> <form>
-	<input name='button' type='button' value='Edit'></form> </div>
-<p class=page_title>{{e['title']}}</p>
+<!-- Page Title: Edit Button -->
+<div id="showTitle">
+	<div class="header_align"> 
+		<form>
+			<input name='button' type='button' value='Edit' 
+			onclick="toggleDiv('editTitle', 'showTitle')">
+		</form> 
+	</div>
+
+<!-- Page Title: Display -->
+	<p class=page_title>{{e['title']}}</p>
+</div>
+
+<!-- Page Title: Edit (Hidden by default) -->
+<div id="editTitle" class="editTitle" style="display: none;">
+	<form id='edit_title' method='post' action='/success'>
+		<input type='text' ID="titleInput" name=2 placeholder="New Title">
+		<input type='submit' value='Save'><input type='button' value='Cancel' 
+			onclick="toggleDiv('showTitle', 'editTitle')">
+	</form>
+</div>
+
+<!-- Subtitle: Edit Button -->
 {% if 2 in summaries.keys() %}
-<p class=subtitle> {{summaries[2][-1]}} </p><br>
-{% else %} <hr><br>
+<div id="showSubtitle">
+	<div class="no_align"> 
+		<form>
+			<input name='button' type='button' value='Edit' 
+				onclick="toggleDiv('editSubtitle', 'showSubtitle')">
+		</form> 
+	</div>
+
+<!-- Subtitle: Display (If present) -->
+	<p class=subtitle> {{summaries[2][3]|safe}} </p><br></div>
+
+<!-- Subtitle: Edit -->
+	{% with summaries = summaries[2] %}
+		<div id="editSubtitle" style="display: none;">
+			<form id='edit_subtitle' method='post' action='/success'>
+				<input type="hidden" name="id" value={{summaries[4]}}>
+				<input type="hidden" name="e_title" value={{e['title']}}>
+				<input type='text' name='content' size='75' placeholder="New Subtitle">
+				<input type='submit' value='Save'><input type='button' value='Cancel' 
+					onclick="toggleDiv('showSubtitle', 'editSubtitle')">
+			</form>
+		</div>
+	{% endwith %}
+
+<!-- if no subtitle: -->
+	{% else %} 
+		<hr><br>
 {% endif %}
 
+<!-- All Other Contexts: Edit Button -->
 {% for item in summaries %}
-{% if item > 2 %}
-<div id="showContext">
-<div class="no_align"> <input name='button' type='button' value='Edit' onclick="toggleDiv('editContext', 'showContext')"> </div>
-<p class=context_title> {{summaries[item][1]}} </p>
-<p class=context_content> {{summaries[item][2]}} </p>
-</div>
-{% endif %}
+	{% if item > 2 %}
+		<div id="showContext{{item}}">
+			<div class="no_align"> 
+				<input name='button' type='button' value='Edit' 
+					onclick="toggleDiv('editContext{{item}}', 'showContext{{item}}')"> 
+			</div>
+
+<!-- All Other Contexts: Title -->
+			<p class=context_title>{{summaries[item][1]}} </p>
+
+<!-- All Other Contexts: Content (With working links) -->
+			<p class=context_content>{{summaries[item][2]|safe}} </p>
+		</div>
+
+<!-- All Other Contexts: Edit (Hidden by default) -->
+	{% with summaries = summaries[item] %}
+		<div id="editContext{{item}}" style="display: none;">
+			<form id='updateContext' method='post' action='/success'>	
+				<div class="header_align"> 
+					<!-- Save & Cancel buttons -->
+					<input type='submit' value='Save'> <input type='button' value='Cancel' 
+					onclick="toggleDiv('showContext{{item}}', 'editContext{{item}}')"> 
+				</div>
+
+				<!-- Title of context you're editing -->
+				<p class=context_title>Edit: {{summaries[1]}} </p>
+				<!-- Hidden form fields -->
+				<input type="hidden" name="id" value={{summaries[4]}}>
+				<input type="hidden" name="e_title" value={{e['title']}}>
+
+				<!-- Enter new context title -->
+				<p><input type='text' name='title' maxlength='255' 
+					placeholder="New Title" ></p><br>
+
+				<!-- Edit content (With [[bracketed]] links) -->
+				<p class=context_content>
+					<textarea name='content' class='small'>{{summaries[3]}} </textarea>
+				</p>
+			</form>
+		</div>
+	{% endwith %}	
+	{% endif %}
 {% endfor %}
 
-<div id="editContext" style="display: none;">
-<form id='edit_context' method='post' action='/edit_success'>
-<div class="header_align"> <input type='submit' value='Save'> <input type='button' value='Cancel' onclick="toggleDiv('showContext', 'editContext')"> </div>
-</form>
-{% with summaries = summaries[3] %}
-{% include 'edit_context.html' ignore missing %}
-{% endwith %}
-</div>
-
-<br>
-<p class=created> Page created: {{e['timestamp']}}</p><br>
+<!-- Element Creation Timestamp -->
+<br><p class=created> Page created: {{e['timestamp']}}</p><br>
 
 <script>
+// Show Edit field and hide Display field, or vice versa
 function toggleDiv(show, hide) {
 	document.getElementById(show).style.display="block";
 	document.getElementById(hide).style.display="none";
