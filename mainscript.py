@@ -28,6 +28,50 @@ def hasContentChanged(clean):
 	else:
 		return True
 
+def process_links(match):
+	''' used within a regex substitution to convert [[links]] to html '''
+	word = match.group(1)
+	# get list of existing titles
+	cursor.execute("SELECT title FROM elements")
+	titles = cursor.fetchall()
+	title_list = [x[0] for x in titles]
+	if word in title_list:
+		# link to existing page
+		url_stem = 'http://localhost:5000'
+		return "<a href=\"" + url_stem + "/page/" + word + "\">" + word + "</a>"
+	else:
+		# change text color as a warning
+		return "<span style='color: #b58900;'}>[[" + word + "]]</span>"
+
+def process_text(s):
+	''' decodes text and sends [[links]] through regex substitution '''
+	decoded = s.decode('utf-8')
+	# convert [[links]] into real links
+	match = r"\[\[(.+?)\]\]"
+	linked = re.sub(match, process_links, decoded)
+	return [linked, decoded]
+
+def context_data(title):
+	''' returns a dictionary of context data by title '''
+	cursor.execute(vq.context_info, [title])
+	records = cursor.fetchall()
+	c = {}
+	for entry in records:
+		id, ordinal, created, title, rawcontent = entry
+		# data processing/formatting
+		created = created.strftime('%m/%d/%Y, %I:%M:%S %p')
+		content = process_text(rawcontent)
+		c[ordinal] = [created, title, content[0], content[1], id]
+	return c
+
+def element_data(title):
+	''' returns a dictionary of element data by title '''
+	cursor.execute(vq.element_info, [title])
+	records = cursor.fetchone()
+	element_ts = records[0].strftime('%m/%d/%Y, %I:%M:%S %p')
+	element_title = records[1]
+	return {'timestamp': element_ts, 'title': element_title}
+
 # Page rendering functions:
 #
 @viv.route('/')
@@ -80,46 +124,6 @@ def newpage():
 def newlist():
 	return render_template('newlist.html')
 
-def process_links(match):
-	word = match.group(1)
-	# get list of existing titles
-	cursor.execute("SELECT title FROM elements")
-	titles = cursor.fetchall()
-	title_list = [x[0] for x in titles]
-	if word in title_list:
-		# link to existing page
-		url_stem = 'http://localhost:5000'
-		return "<a href=\"" + url_stem + "/page/" + word + "\">" + word + "</a>"
-	else:
-		# change text color as a warning
-		return "<span style='color: #b58900;'}>[[" + word + "]]</span>"
-
-def process_text(s):
-	decoded = s.decode('utf-8')
-	# convert [[links]] into real links
-	match = r"\[\[(.+?)\]\]"
-	linked = re.sub(match, process_links, decoded)
-	return [linked, decoded]
-
-def context_data(title):
-	cursor.execute(vq.context_info, [title])
-	records = cursor.fetchall()
-	c = {}
-	for entry in records:
-		id, ordinal, created, title, rawcontent = entry
-		# data processing/formatting
-		created = created.strftime('%m/%d/%Y, %I:%M:%S %p')
-		content = process_text(rawcontent)
-		c[ordinal] = [created, title, content[0], content[1], id]
-	return c
-
-def element_data(title):
-	cursor.execute(vq.element_info, [title])
-	records = cursor.fetchone()
-	element_ts = records[0].strftime('%m/%d/%Y, %I:%M:%S %p')
-	element_title = records[1]
-	return {'timestamp': element_ts, 'title': element_title}
-
 @viv.route('/page/<title>', methods=['GET','POST'])
 def show_page(title):
 	if request.method == 'GET':
@@ -131,7 +135,10 @@ def show_page(title):
 
 @viv.route('/page/<title>/add')
 def add_context(title):
-	return(title)
+	if request.method == 'GET':
+		e = element_data(title)
+		c = context_data(title)
+		return render_template('add_context.html', e = e, summaries = c)
 
 @viv.route('/success', methods=['GET','POST'])
 def success():

@@ -1,0 +1,60 @@
+{% extends 'background.html' %}
+
+{% block body %}
+
+<!-- Page Title: Display -->
+<div id="showTitle">
+	{% set etitle = e['title'] %}
+	<p class=page_title>{{e['title']}}</p>
+</div>
+
+<!-- Subtitle: Display (If present) -->
+{% if 2 in summaries.keys() %}
+	<p class=subtitle> {{summaries[2][3]|safe}} </p><br>
+{% else %} 
+		<hr><br>
+{% endif %}
+
+<!-- Display other context titles in order -->
+{% for item in summaries %}
+	<ol>
+		{% if item > 2 %}
+			<li>{{summaries[item][1]}}</li>
+		{% endif %}
+	</ol>
+{% endfor %}
+
+<h2>Add New Section: </h2><hr>	
+
+<!-- Save & cancel buttons -->
+<form id='add_section'>
+	<div class="no_align"> 
+		<input type='submit' value='Save' action="/success"> 
+		<input type='button' value='Cancel' onclick="revert('{{etitle}}')"> 
+	</div>
+
+<!-- Enter new context title and order -->
+	<p><input type='number' name='ordinal' style="width: 2em;" maxlength='2' placeholder="#" >
+	<input type='text' name='title' maxlength='255' placeholder="New Title" ></p><br>
+
+<!-- Text field -->
+	<p class=context_content>
+		<textarea name='content' class='small'></textarea>
+	</p>
+
+</form>
+
+<script>
+// if Cancel, then redirect back to wiki page
+function revert(title) {
+	window.location.replace("http://localhost:5000/page/" + title);
+}
+
+// watch the ordinal input field and reorder context titles on the fly
+function reorder_contexts(num) {
+
+}
+</script>
+
+
+{% endblock %}
