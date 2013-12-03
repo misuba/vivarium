@@ -20,8 +20,8 @@ def hasContentChanged(clean):
 	''' returns True if new content differs from old content, and False otherwise'''
 	context_id = clean['id']
 	newContent = clean['content'].strip()
-	oldContentSQL = "SELECT content FROM contexts WHERE id = {0}".format(context_id)
-	cursor.execute(oldContentSQL)
+	oldContentSQL = "SELECT content FROM contexts WHERE id = %s"
+	cursor.execute(oldContentSQL, [context_id])
 	oldContent = cursor.fetchone()[0].strip()	# don't count trailing space as an edit
 	if oldContent == newContent:
 		return False
@@ -80,21 +80,26 @@ def newpage():
 def newlist():
 	return render_template('newlist.html')
 
-@viv.route('/edit/<title>', methods=['GET','POST'])
-def edit_context(title):
-	return render_template('nope.html')
-
 def process_links(match):
 	word = match.group(1)
-	url_stem = 'http://localhost:5000'
-	return "<a href=\"" + url_stem + "/page/" + word + "\">" + word + "</a>"
+	# get list of existing titles
+	cursor.execute("SELECT title FROM elements")
+	titles = cursor.fetchall()
+	title_list = [x[0] for x in titles]
+	if word in title_list:
+		# link to existing page
+		url_stem = 'http://localhost:5000'
+		return "<a href=\"" + url_stem + "/page/" + word + "\">" + word + "</a>"
+	else:
+		# change text color as a warning
+		return "<span style='color: #b58900;'}>[[" + word + "]]</span>"
 
 def process_text(s):
 	decoded = s.decode('utf-8')
 	# convert [[links]] into real links
 	match = r"\[\[(.+?)\]\]"
 	linked = re.sub(match, process_links, decoded)
-	return linked
+	return [linked, decoded]
 
 def context_data(title):
 	cursor.execute(vq.context_info, [title])
@@ -105,7 +110,7 @@ def context_data(title):
 		# data processing/formatting
 		created = created.strftime('%m/%d/%Y, %I:%M:%S %p')
 		content = process_text(rawcontent)
-		c[ordinal] = [created, title, content, id]
+		c[ordinal] = [created, title, content[0], content[1], id]
 	return c
 
 def element_data(title):
