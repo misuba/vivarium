@@ -1,4 +1,4 @@
-import psycopg2, re
+import psycopg2, re, datetime
 from flask import Flask, url_for, render_template, request, redirect
 import vivarium_queries as vq
 
@@ -62,6 +62,12 @@ def context_data(title):
 		content = process_text(rawcontent)
 		c[ordinal] = [created, title, content[0], content[1], id]
 	return c
+
+def get_element_id(title):
+	SQLstring = '''SELECT id FROM elements WHERE title = %s'''
+	cursor.execute(SQLstring, [title])
+	element_id = cursor.fetchone()[0]
+	return element_id
 
 def element_data(title):
 	''' returns a dictionary of element data by title '''
@@ -157,6 +163,23 @@ def add_context(title):
 		c = context_data(title)
 		return render_template('add_context.html', e = e, summaries = c)
 
+@viv.route('/track/<id>')
+def track(id):
+	now = datetime.datetime.now()
+	new_id = int(id)
+	SQLstring = '''select r.created from revisions r inner join pages_to_contexts p 
+		ON p.context_id = r.context_id WHERE p.page_id = %s'''
+	cursor.execute(SQLstring, [new_id])
+	records = cursor.fetchall()
+	comp = [(now - x[0]).days for x in records]
+	result = process_weighted(comp)
+	return str(id) + ": " + str(result)
+
+def process_weighted(comp):
+	comp2 = [1 if x == 0 else x for x in comp]
+	comp3 = [((366.0-x)/365) for x in comp2]
+	return sum(comp3)
+
 @viv.route('/success', methods=['GET','POST'])
 def success():
 	if request.method == 'GET':
@@ -172,52 +195,44 @@ def success():
 		elif form_name == 'add_context':
 			# a new context has been added to an existing page:
 			e_title = clean['e_title']
-			ordinal2 = process_ordinals(clean)
-			clean['ordinal'] = ordinal2
-			content2 = clean['content'].decode('utf-8')
-			clean['content'] = content2
+			clean['ordinal'] = process_ordinals(clean)
+			clean['content'] = clean['content'].decode('utf-8')
 			# RETURNING ID is FUCKING BRILLIANT
 			SQLstring = '''INSERT INTO contexts (ordinal, content, title) VALUES
-				(%(ordinal)s, %(content)s, %(title)s) RETURNING id'''
+				(%(ordinal)s, %(content)s, %(title)s) RETURNING id'''	# <--- HUZZAH
 			cursor.execute(SQLstring, clean)
 			conn.commit()
+			# Now add a row in pages_to_contexts to connect the context and element
 			context_id = cursor.fetchone()[0]
 			element_id = get_element_id(e_title)
-			SQLstring = '''INSERT INTO pages_to_contexts (context_id, page_id) VALUES (%s, %s)'''
-			cursor.execute(SQLstring, [context_id, element_id])
-			conn.commit()
+			connect_context(context_id, element_id)
 			return redirect(url_for('show_page', title=e_title))
 
-def get_element_id(title):
-	SQLstring = '''SELECT id FROM elements WHERE title = %s'''
-	cursor.execute(SQLstring, [title])
-	element_id = cursor.fetchone()[0]
-	return element_id
+def connect_context(context_id, element_id):
+	SQLstring = '''INSERT INTO pages_to_contexts (context_id, page_id) VALUES (%s, %s)'''
+	cursor.execute(SQLstring, [context_id, element_id])
+	conn.commit()
 
 def process_ordinals(d):
 	''' Evaluate a newly submitted ordinal and change other ordinals if necessary '''
-	new_ordinal = d['ordinal']
+	new_ordinal = int(d['ordinal']) + 2		# to account for subtitle and abstract
 	e_title = d['e_title']
 	# retrieve ordinals for all other contexts attached to this page
 	cursor.execute(vq.element_ordinals, [e_title])
 	records = cursor.fetchall()
 	ords = [x[1] for x in records]
-	# if new_ordinal > (max(ords) - 2):
-	new_ordinal = max(ords) + 1
-	return new_ordinal
-	# next step: allow ordinals to be reordered
-	#
-	# elif new_ordinal < (min(ords) - 2):
-	# 	new_ordinal = min(ords)
-	# 	existing = {}
-	# 	for thing in records:
-	# 		id, ord = thing
-	# 		existing[id] = {'id': id, 'ordinal': ord+1}
-	# 	for item in existing.keys():
-	# 		sql_increment = "UPDATE contexts SET ordinal = %(ordinal)s WHERE id = %(id)s"
-	# 		cursor.execute(sql_increment, existing[item])
-	# else:
-	# 	pass
+	# Return list of ordinals that will be affected
+	if new_ordinal < max(ords):
+		affected = [{'id': x[0], 'ordinal': x[1] + 1} for x in records if x[1] >= new_ordinal]
+		for item in affected:
+			increment = "UPDATE contexts SET ordinal = %(ordinal)s WHERE id = %(id)s"
+			cursor.execute(increment, item)
+			conn.commit()
+		return new_ordinal
+	else:
+	# Else: the context gets added to the end
+		new_ordinal = max(ords) + 1
+		return new_ordinal
 
 
 if __name__ == "__main__":
