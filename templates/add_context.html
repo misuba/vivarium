@@ -16,22 +16,25 @@
 {% endif %}
 
 <!-- Display other context titles in order -->
+<ol>
 {% for item in summaries %}
-	<ol>
 		{% if item > 2 %}
 			<li>{{summaries[item][1]}}</li>
 		{% endif %}
-	</ol>
 {% endfor %}
-
+</ol>
 <h2>Add New Section: </h2><hr>	
 
 <!-- Save & cancel buttons -->
-<form id='add_section'>
+<form method='post' action='/success'>
 	<div class="no_align"> 
-		<input type='submit' value='Save' action="/success"> 
+		<input type='submit' value='Save'> 
 		<input type='button' value='Cancel' onclick="revert('{{etitle}}')"> 
 	</div>
+
+<!-- hidden -->
+<input type="hidden" name="form_name" value="add_context">
+<input type="hidden" name="e_title" value="{{etitle}}">
 
 <!-- Enter new context title and order -->
 	<p><input type='number' name='ordinal' style="width: 2em;" maxlength='2' placeholder="#" >

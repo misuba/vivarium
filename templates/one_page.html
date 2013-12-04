@@ -40,8 +40,9 @@
 <!-- Subtitle: Edit -->
 	{% with summaries = summaries[2] %}
 		<div id="editSubtitle" style="display: none;">
-			<form id='edit_subtitle' method='post' action='/success'>
+			<form id='updateContext' method='post' action='/success'>
 				<input type="hidden" name="id" value={{summaries[4]}}>
+				<input type="hidden" name="form_name" value="edit_context">
 				<input type="hidden" name="e_title" value={{e['title']}}>
 				<input type='text' name='content' size='75' placeholder="New Subtitle">
 				<input type='submit' value='Save'><input type='button' value='Cancel' 
@@ -56,16 +57,16 @@
 {% endif %}
 
 <!-- All Other Contexts: Edit Button -->
-{% for item in summaries %}
+{% for item in summaries.keys()|sort %}
 	{% if item > 2 %}
 		<div id="showContext{{item}}">
 			<div class="no_align"> 
 				<input name='button' type='button' value='Edit' 
-					onclick="toggleDiv('editContext{{item}}', 'showContext{{item}}')"> 
+					onclick="toggleDiv('editContext{{item}}', 'showContext{{item}}')">
 			</div>
 
 <!-- All Other Contexts: Title -->
-			<p class=context_title>{{summaries[item][1]}} </p>
+			<p id='context_title{{item}}' class=context_title>{{summaries[item][1]}} </p>
 
 <!-- All Other Contexts: Content (With working links) -->
 			<p class=context_content>{{summaries[item][2]|safe}} </p>
@@ -84,6 +85,7 @@
 				<!-- Title of context you're editing -->
 				<p class=context_title>Edit: {{summaries[1]}} </p>
 				<!-- Hidden form fields -->
+				<input type="hidden" name="form_name" value="edit_context">
 				<input type="hidden" name="id" value={{summaries[4]}}>
 				<input type="hidden" name="e_title" value={{e['title']}}>
 
@@ -110,6 +112,13 @@ function toggleDiv(show, hide) {
 	document.getElementById(show).style.display="block";
 	document.getElementById(hide).style.display="none";
 }
+
+// Not yet implemented
+function highlightTitle(id) {
+	var p_id = 'context_title' + id;
+	document.getElementById(p_id).style.color="red";
+}
+
 </script>
 
 {% endblock %}
