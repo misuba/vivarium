@@ -1,6 +1,5 @@
 import psycopg2, re
 from flask import Flask, url_for, render_template, request, redirect
-from string import Template
 import vivarium_queries as vq
 
 viv = Flask(__name__)
@@ -16,9 +15,8 @@ cursor = conn.cursor()
 
 # Housekeeping functions with database queries:
 #
-def hasContentChanged(clean):
+def hasContentChanged(clean, context_id):
 	''' returns True if new content differs from old content, and False otherwise'''
-	context_id = clean['id']
 	newContent = clean['content'].strip()
 	oldContentSQL = "SELECT content FROM contexts WHERE id = %s"
 	cursor.execute(oldContentSQL, [context_id])
@@ -43,6 +41,7 @@ def process_links(match):
 		# change text color as a warning
 		return "<span style='color: #b58900;'}>[[" + word + "]]</span>"
 
+# called by context_data(title)
 def process_text(s):
 	''' decodes text and sends [[links]] through regex substitution '''
 	decoded = s.decode('utf-8')
@@ -71,6 +70,24 @@ def element_data(title):
 	element_ts = records[0].strftime('%m/%d/%Y, %I:%M:%S %p')
 	element_title = records[1]
 	return {'timestamp': element_ts, 'title': element_title}
+
+def edit_context(clean):
+	e_title = clean.pop('e_title', None)
+	c_id = clean.pop('id', None)
+	if 'title' in clean.keys():
+		updateSQL = '''UPDATE contexts SET title = %(title)s WHERE id = {0}'''.format(c_id)
+		cursor.execute(updateSQL, clean)
+		conn.commit()
+	# check to see if content has changed
+	r = hasContentChanged(clean, c_id)
+	if r == True:
+		updateSQL = '''UPDATE contexts SET content = %(content)s WHERE id = {0}'''.format(c_id)
+		cursor.execute(updateSQL, clean)
+		conn.commit()
+	else:
+		# nothing has changed
+		return e_title
+	return e_title
 
 # Page rendering functions:
 #
@@ -147,32 +164,60 @@ def success():
 	else:
 		input = request.form
 		clean = vq.cleanFormInput(input)
-		e_title = clean.pop('e_title', None)
-		r = hasContentChanged(clean)
-		if r == True:
-			c_id = clean.pop('id', None)
-			if clean.keys() == ['content']:	
-				# this is a content-only update
-				updateSQL = '''UPDATE contexts SET content = %(content)s WHERE id = {0}'''.format(c_id)
-				cursor.execute(updateSQL, clean)
-				conn.commit()
-				return redirect(url_for('show_page', title=e_title))
-			elif 'title' in clean.keys():
-				# this is a content + title update
-				updateSQL = '''UPDATE contexts SET (content, title) = (%(content)s, %(title)s) WHERE id = {0}'''.format(c_id)
-				cursor.execute(updateSQL, clean)
-				conn.commit()
-				return redirect(url_for('show_page', title=e_title))
-		else:
-			if 'title' in clean.keys():
-				# this is a title-only update
-				updateSQL = '''UPDATE contexts SET title = %(title)s WHERE id = {0}'''.format(c_id)
-				cursor.execute(updateSQL, clean)
-				conn.commit()
-				return redirect(url_for('show_page', title=e_title))
-			else:
-				# nothing has changed; redirect back to page
-				return redirect(url_for('show_page', title=e_title))
+		form_name = clean.pop('form_name', None)
+		if form_name == 'edit_context':
+			# an existing context has been edited:
+			e_title = edit_context(clean)
+			return redirect(url_for('show_page', title=e_title))
+		elif form_name == 'add_context':
+			# a new context has been added to an existing page:
+			e_title = clean['e_title']
+			ordinal2 = process_ordinals(clean)
+			clean['ordinal'] = ordinal2
+			content2 = clean['content'].decode('utf-8')
+			clean['content'] = content2
+			# RETURNING ID is FUCKING BRILLIANT
+			SQLstring = '''INSERT INTO contexts (ordinal, content, title) VALUES
+				(%(ordinal)s, %(content)s, %(title)s) RETURNING id'''
+			cursor.execute(SQLstring, clean)
+			conn.commit()
+			context_id = cursor.fetchone()[0]
+			element_id = get_element_id(e_title)
+			SQLstring = '''INSERT INTO pages_to_contexts (context_id, page_id) VALUES (%s, %s)'''
+			cursor.execute(SQLstring, [context_id, element_id])
+			conn.commit()
+			return redirect(url_for('show_page', title=e_title))
+
+def get_element_id(title):
+	SQLstring = '''SELECT id FROM elements WHERE title = %s'''
+	cursor.execute(SQLstring, [title])
+	element_id = cursor.fetchone()[0]
+	return element_id
+
+def process_ordinals(d):
+	''' Evaluate a newly submitted ordinal and change other ordinals if necessary '''
+	new_ordinal = d['ordinal']
+	e_title = d['e_title']
+	# retrieve ordinals for all other contexts attached to this page
+	cursor.execute(vq.element_ordinals, [e_title])
+	records = cursor.fetchall()
+	ords = [x[1] for x in records]
+	# if new_ordinal > (max(ords) - 2):
+	new_ordinal = max(ords) + 1
+	return new_ordinal
+	# next step: allow ordinals to be reordered
+	#
+	# elif new_ordinal < (min(ords) - 2):
+	# 	new_ordinal = min(ords)
+	# 	existing = {}
+	# 	for thing in records:
+	# 		id, ord = thing
+	# 		existing[id] = {'id': id, 'ordinal': ord+1}
+	# 	for item in existing.keys():
+	# 		sql_increment = "UPDATE contexts SET ordinal = %(ordinal)s WHERE id = %(id)s"
+	# 		cursor.execute(sql_increment, existing[item])
+	# else:
+	# 	pass
 
 
 if __name__ == "__main__":
