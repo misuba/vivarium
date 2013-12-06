@@ -45,9 +45,11 @@ def process_links(match):
 def process_text(s):
 	''' decodes text and sends [[links]] through regex substitution '''
 	decoded = s.decode('utf-8')
+	# convert \r into <br>
+	newlined = re.sub('\\r', '<br>', decoded)
 	# convert [[links]] into real links
 	match = r"\[\[(.+?)\]\]"
-	linked = re.sub(match, process_links, decoded)
+	linked = re.sub(match, process_links, newlined)
 	return [linked, decoded]
 
 def context_data(title):
@@ -207,6 +209,31 @@ def success():
 			element_id = get_element_id(e_title)
 			connect_context(context_id, element_id)
 			return redirect(url_for('show_page', title=e_title))
+		elif form_name == 'add_page':
+			# first add an element and return its id
+			SQLstring = '''INSERT INTO elements (space_id, element_type, title) 
+				VALUES (1, 1, %(title)s) RETURNING id'''
+			cursor.execute(SQLstring, clean)
+			conn.commit()
+			element_id = cursor.fetchone()[0]
+			# if there is a subtitle, add it as a special context
+			if 'subtitle' in clean.keys():
+				sub_d = {'ordinal': 2, 'content': clean['subtitle'], 'title': 'subtitle', 'e_title': clean['title']}
+				add_context(sub_d)
+			context_d = {'title': 'main', 'ordinal': 3, 'content': clean['content'], 'e_title': clean['title']}
+			add_context(context_d)
+			return redirect(url_for('show_page', title=clean['e_title']))
+
+def add_context(d):
+	SQLstring = '''INSERT INTO contexts (ordinal, content, title) VALUES
+				(%(ordinal)s, %(content)s, %(title)s) RETURNING id'''	# <--- HUZZAH
+	cursor.execute(SQLstring, d)
+	conn.commit()
+	# Now add a row in pages_to_contexts to connect the context and element
+	context_id = cursor.fetchone()[0]
+	e_title = d['e_title']
+	element_id = get_element_id(e_title)
+	connect_context(context_id, element_id)
 
 def connect_context(context_id, element_id):
 	SQLstring = '''INSERT INTO pages_to_contexts (context_id, page_id) VALUES (%s, %s)'''
