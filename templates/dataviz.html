@@ -1,0 +1,40 @@
+<div class="dataviz">
+
+<div class="svg"></div>
+
+<script>
+
+// toy data
+var pages = ['Ishmael', 'Flask', 'Stubb', 'Starbuck']
+
+// SVG starting dimensions
+var w = window.innerWidth * 0.29;
+var h = window.innerHeight * 0.95;
+
+var circles = d3.select('.dataviz').append('svg')
+	.attr('width', w)
+	.attr('height', h);
+
+var child = circles.selectAll('svg').data(pages).enter();
+
+child.append('circle')
+		.attr('cx', 20)
+		.attr('cy', function(s, i) {
+			return ((i * 10) + 20);
+		})
+		.attr('r', 5)
+		.attr('fill', 'steelblue')
+		.attr('stroke', 'black');
+
+// Adjust SVG width and height every time window is resized
+window.addEventListener('resize', adjustSVG);
+function adjustSVG() {
+	var new_w = window.innerWidth * 0.29;
+	var new_h = window.innerHeight * 0.95;
+	circles.attr('width', new_w)
+		.attr('height', new_h);
+}
+
+</script>
+
+</div>
