@@ -2,20 +2,57 @@
 
 {% block body %}
 
+<!-- Submit and Cancel buttons -->
 <form id='add_page' method='post' action='/success'>
-	<div class="header_align"> <input type='submit' value='Submit'> </div>
-<h1>Add a new page: </h1><br>
-	<p> Title: <br> <input type='text' name='title' maxlength='255'></p><br>
-	<p> Subtitle:<br> <input type='text' name=1 size='75'></p><br>
-	<p> Abstract:<br> <textarea name=2 class='small'></textarea></p><br>
-	<p> Content:<br> <textarea name=0 class='small'></textarea></p><br>
-	<p> Motivations:<br> <textarea name=3 class='small'></textarea></p><br>
-	<p> Basics:<br> <textarea name=4 class='small'></textarea></p><br>
-	<p> Opinions:<br> <textarea name=5 class='small'></textarea></p><br>
-	<p> Social:<br> <textarea name=6 class='small'></textarea></p><br>
-	<p> Extra Credit:<br> <textarea name=7 class='small'></textarea></p><br>
-	<input type='hidden' name='form_id' value='add_page'>
-	<p> <input type='submit' value='Submit'></p>
+	<div class="header_align"> <input type='submit' value='Submit'>
+	<input type='button' value='Cancel' onclick="window.location.replace('http://localhost:5000/')"> </div>
+
+<h2>Add a new page: </h2><hr><br>
+
+<!-- Title and subtitle fields -->
+	<p> Title & Subtitle: <br><input type='text' name='title' 
+		maxlength='255' placeholder="Required"></p>
+	<p> <input type='text' name='subtitle' size=80
+		placeholder="Optional but recommended"></p><br>
+
+<!-- Abstract: Hidden by default -->
+	<div id='abstractLabel' style="padding-bottom: 6px; border-bottom: 1px dashed #bbb;">Abstract:
+	<div class="no_align"><input id='abstractButton' type='button' value="Show"
+				onclick="showHide('abstract', 'abstractButton')"></div></div>
+	<div id='abstract' style="display: none;">
+		<textarea name='abstract' class='small'></textarea></div><br>
+
+<!-- Content -->
+	<p> Main Content:<br> <textarea name='content' class='small'></textarea></p><br>
+
+<!-- Hidden fields -->
+	<input type='hidden' name='form_name' value='add_page'>
+
+<!-- Submit and Cancel buttons again -->
+<input type='submit' value='Submit'>
+	<input type='button' value='Cancel' onclick="window.location.replace('http://localhost:5000/')">
+
+<!-- If you want to add more sections -->
+	<div class="andbutso"><a href="http://localhost:5000/success_plus">Submit and proceed to add more sections ---></a></div>
 </form>
+
+<script>
+// Show Edit field and hide Display field, or vice versa
+function showHide(div, button) {
+	var a = document.getElementById(div);
+	var b = document.getElementById(button);
+	if(a.style.display == "block") {
+		a.style.display = "none";
+		document.getElementById('abstractLabel').style="padding-bottom: 6px; border-bottom: 1px dashed #bbb;";
+		b.value = "Show";
+	}
+	else {
+		a.style.display = "block";
+		document.getElementById('abstractLabel').style="padding-bottom: 6px; border-bottom: 0px;";
+		b.value = "Hide";
+	}
+}
+
+</script>
 
 {% endblock %}

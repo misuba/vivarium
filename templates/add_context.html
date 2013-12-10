@@ -19,7 +19,11 @@
 <ol>
 {% for item in summaries %}
 		{% if item > 2 %}
+		{% if summaries[item][1] == 'main' %}
+			<li>Main Content</li>
+		{% else %}
 			<li>{{summaries[item][1]}}</li>
+		{% endif %}
 		{% endif %}
 {% endfor %}
 </ol>

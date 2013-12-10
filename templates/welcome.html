@@ -4,13 +4,19 @@
 
 <h1>Vivarium</h1><br>
 
-<p>Welcome. Here are your most recent pages:</p><br>
-
 {% for summary in summaries %}
+{% if summary.length == 2 %}
+
 {% set pagetitle = summary[1] %}
-<p><strong><a href={{ url_for('show_page', title=pagetitle) }}> {{summary[1]}}: </a></strong></p>
-<p> {{summary[2]}} </p>
+<p><strong><a href={{ url_for('show_page', title=pagetitle) }}> {{summary[1]}} </a></strong></p>
 <p class=created>{{summary[0]}}</p><br>
+
+{% else %}
+
+{% set pagetitle = summary[1] %}
+<p><strong><a href={{ url_for('show_page', title=pagetitle) }}> {{summary[1]}}: </a></strong> {{summary[2]}} </p>
+<p class=created style="text-align: right;">{{summary[0]}}</p>
+{% endif %}
 {% endfor %}
 
 {% endblock %}

@@ -8,6 +8,10 @@
 		<form>
 			<input name='button' type='button' value='Edit' 
 			onclick="toggleDiv('editTitle', 'showTitle')">
+			{% if 2 not in summaries.keys() %}
+			<input name='button' type='button' value='Add Subtitle' 
+				onclick="showDiv('editSubtitle')">
+			{% endif %}
 		</form> 
 	</div>
 
@@ -56,7 +60,7 @@
 		<hr><br>
 {% endif %}
 
-<!-- All Other Contexts: Edit Button -->
+<!-- All Other Contexts: Edit Buttons -->
 {% for item in summaries.keys()|sort %}
 	{% if item > 2 %}
 		<div id="showContext{{item}}">
@@ -66,7 +70,9 @@
 			</div>
 
 <!-- All Other Contexts: Title -->
+			{% if summaries[item][1] != 'main' %}
 			<p id='context_title{{item}}' class=context_title>{{summaries[item][1]}} </p>
+			{% endif %}
 
 <!-- All Other Contexts: Content (With working links) -->
 			<p class=context_content>{{summaries[item][2]|safe}} </p>
@@ -77,9 +83,13 @@
 		<div id="editContext{{item}}" style="display: none;">
 			<form id='updateContext' method='post' action='/success'>	
 				<div class="header_align"> 
-					<!-- Save & Cancel buttons -->
+					<!-- Save, Cancel, & Delete buttons -->
+					<div class="buttonBar">
 					<input type='submit' value='Save'> <input type='button' value='Cancel' 
 					onclick="toggleDiv('showContext{{item}}', 'editContext{{item}}')"> 
+						<input type="submit" name="delete" value="Delete" form="deleteForm">
+					</div>
+
 				</div>
 
 				<!-- Title of context you're editing -->
@@ -98,6 +108,12 @@
 					<textarea name='content' class='small'>{{summaries[3]}} </textarea>
 				</p>
 			</form>
+
+			<!-- the Delete form -->
+			<form id="deleteForm" action="/delete"><input name='button' method="post" value='Delete'
+					onclick="deleteContext({{summaries[-1]}})">
+			</form>
+
 		</div>
 	{% endwith %}	
 	{% endif %}
@@ -111,6 +127,14 @@
 function toggleDiv(show, hide) {
 	document.getElementById(show).style.display="block";
 	document.getElementById(hide).style.display="none";
+}
+
+function showDiv(show) {
+	document.getElementById(show).style.display="block";
+}
+
+function deleteContext(id) {
+	alert(id);
 }
 
 // Not yet implemented

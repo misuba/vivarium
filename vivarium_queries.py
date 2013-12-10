@@ -47,6 +47,14 @@ context_info = '''
 		ORDER BY c.ordinal ASC 
 	'''
 
+element_ordinals = '''
+	SELECT c.id, c.ordinal
+	FROM elements e
+		INNER JOIN pages_to_contexts p ON p.page_id = e.id
+		INNER JOIN contexts c ON c.id = p.context_id
+		WHERE e.title = %s AND c.ordinal > 2
+	'''
+
 context_insert = '''
 	INSERT INTO contexts (toc_id, context_type, content) VALUES
 	'''
