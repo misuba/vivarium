@@ -144,6 +144,13 @@ h2 {
 	border-top: 2px solid #eee;
 }
 
+.andbutso {
+	font-style: oblique;
+	text-decoration: underline;
+	color: #777;
+	text-align: right;
+}
+
 #titleInput {
 	size: 75;
 	font-size: 1.5em;
@@ -155,21 +162,21 @@ h2 {
 /* ====================
 /* SVG Elements */
 
-.svg_div {
-	height: 200px;
-	width: 100%;
-	overflow: scroll;
-}
-
 svg {
-	border: 3px dotted #ccc;
+	 /* border: 2px dotted #ccc; */
 }
 
-rect {
-	fill: steelblue;
-	stroke: black;
+div.tooltip {
+	position: absolute;
+	text-align: center;
+	width: 60px;
+	height: 30px;
+	padding: 3px;
+	background: white;
+	border: 0px;
+	border-radius: 8px;
+	pointer-events: none;
 }
-
 
 /* ====================
 /* Page Elements */
@@ -178,10 +185,18 @@ rect {
 	height: 10%;
 }
 
+.dataviz {
+	position: absolute;
+	right: 1%;
+	top: 1em;
+	width: 29%;
+	height: 95%;
+	/* border: 2px solid #ccf000; */
+}
+
 .sidebar {
 	position: absolute;
 	left: 0;
-	border-top: 1px solid #444; 
 	top: 1.75em;
 	width: 15%;
 	padding-left: 0.8em;
@@ -208,7 +223,7 @@ rect {
 	position: relative;
 	left: 15%;
 	top: 1em; 
-	width: 35em;
+	width: 50%; /* was 35em; */
 	border: 5px solid #b58900;	/* Solarized Light: yellow */
 	padding: 0.8em;
 	background-color: white;

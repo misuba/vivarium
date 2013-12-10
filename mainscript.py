@@ -210,6 +210,7 @@ def success():
 			connect_context(context_id, element_id)
 			return redirect(url_for('show_page', title=e_title))
 		elif form_name == 'add_page':
+			e_title = clean['title']
 			# first add an element and return its id
 			SQLstring = '''INSERT INTO elements (space_id, element_type, title) 
 				VALUES (1, 1, %(title)s) RETURNING id'''
@@ -218,11 +219,11 @@ def success():
 			element_id = cursor.fetchone()[0]
 			# if there is a subtitle, add it as a special context
 			if 'subtitle' in clean.keys():
-				sub_d = {'ordinal': 2, 'content': clean['subtitle'], 'title': 'subtitle', 'e_title': clean['title']}
+				sub_d = {'ordinal': 2, 'content': clean['subtitle'], 'title': 'subtitle', 'e_title': e_title}
 				add_context(sub_d)
-			context_d = {'title': 'main', 'ordinal': 3, 'content': clean['content'], 'e_title': clean['title']}
+			context_d = {'title': 'main', 'ordinal': 3, 'content': clean['content'], 'e_title': e_title}
 			add_context(context_d)
-			return redirect(url_for('show_page', title=clean['e_title']))
+			return redirect(url_for('show_page', title=e_title))
 
 def add_context(d):
 	SQLstring = '''INSERT INTO contexts (ordinal, content, title) VALUES
@@ -249,17 +250,21 @@ def process_ordinals(d):
 	records = cursor.fetchall()
 	ords = [x[1] for x in records]
 	# Return list of ordinals that will be affected
-	if new_ordinal < max(ords):
-		affected = [{'id': x[0], 'ordinal': x[1] + 1} for x in records if x[1] >= new_ordinal]
-		for item in affected:
-			increment = "UPDATE contexts SET ordinal = %(ordinal)s WHERE id = %(id)s"
-			cursor.execute(increment, item)
-			conn.commit()
-		return new_ordinal
+	if len(ords) > 0:
+		if new_ordinal < max(ords):
+			affected = [{'id': x[0], 'ordinal': x[1] + 1} for x in records if x[1] >= new_ordinal]
+			for item in affected:
+				increment = "UPDATE contexts SET ordinal = %(ordinal)s WHERE id = %(id)s"
+				cursor.execute(increment, item)
+				conn.commit()
+			return new_ordinal
+		else:
+		# Else: the context gets added to the end
+			new_ordinal = max(ords) + 1
+			return new_ordinal
 	else:
-	# Else: the context gets added to the end
-		new_ordinal = max(ords) + 1
-		return new_ordinal
+		# There are no other elements attached to the page; this is the first
+		return 3
 
 
 if __name__ == "__main__":
