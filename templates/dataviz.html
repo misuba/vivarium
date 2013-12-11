@@ -2,90 +2,125 @@
 
 <!-- if the motion gets too annoying: a freeze button -->
 <!-- currently does nothing lol -->
-<div style="float: right;"> <input type='button' value='Freeze'> </div>
+<div style="float: right;"> <button>Freeze</button>
+</div>
 
 <script>
 
 // toy data
 var pages = ['Ishmael', 'Flask', 'Stubb', 'Starbuck']
 
-// tooltip element
-var titlediv = d3.select('body').append('div')   
-    .attr("class", "tooltip")               
-    .style("opacity", 0);
-
 // create SVG element
 var parent = d3.select('.dataviz').append('svg')
 	.attr('width', (window.innerWidth * 0.29))
 	.attr('height', (window.innerHeight * 0.95));
 
-var child = parent.selectAll('svg')
-	.data(pages)
-	.enter().append('g')	// will hold both circle and text
-	.attr('id', function(d, i) {
-		return 'g' + i;
-	});
+// for force layout (includes margins)
+var width = (window.innerWidth * 0.29) - 20;
+var height = (window.innerHeight * 0.95) - 20;
 
-
-var cir = child.append('circle')
-	.attr('cx', function(s, i) { return xvals(i); })
-	.attr('cy', function(s, i) { return xvals(i); })
-	.attr('r', 10)
-	.attr('class', 'circle')
-	.attr('fill', function(s, i) {
-		var colors=['red', 'orange', 'lightgreen', 'lightblue'];
-		return colors[i];
-	})
-	.attr('stroke', 'black');
-
-var caption = child.append('text')
-	.attr('x', function(d, i) {
-		//var c_loc = d3.mouse(d3.select(this.parentNode).select('.circle'));
-		//console.log(c_loc);
-		return xvals(i); 
-	})
-	.attr('y', function(d, i) { return xvals(i); })
-	.attr('dy', '.35em')
-	.attr('class', 'caption')
-	.style('opacity', 0)
-	.text(function(d) {return d; });
-
-var cir_each = d3.selectAll('g').selectAll('text');
-
-cir.on('mouseover', function(d) {
-	var xplace = d3.select(this).attr('cx');
-	var yplace = d3.select(this).attr('cy');
-	d3.select(this)
-		.transition()
-			.duration(500)
-			.attr('fill', 'white')
-			.attr('stroke', 'black');
-	d3.select(this.parentNode).select('.caption')
-		// first move the text close to the cursor (and the node)
-		.attr('x', function(d) {
-			var xplace2 = parseInt(xplace) + 20;
-			return xplace2;
-		})
-		.attr('y', function(d) { return yplace; })
-		// now change the opacity
-		.transition()
-			.duration(200)
-			.style('opacity', .8)
-			.text(d);
- });
-
-cir.on('mouseout', function(d, i) {
-	d3.select(this).transition()
-		.duration(500)
-		.attr('fill', function(d) {
-			var colors=['#377BA8', '#377BA8', '#377BA8', '#377BA8'];
-			return colors[i];
-		})
-		.attr('stroke', 'gray');
-	caption.transition()
-		.duration(500)
-		.style('opacity', 0);
+var nodes = d3.range(10).map(function(i) {
+	return {index: i};
 });
+console.log(nodes);
+
+// force layout
+var force = d3.layout.force()
+	.nodes(nodes)
+	.size([width, height])
+	.on('tick', tick)
+	.gravity(0.0025)
+	.start();
+
+var node = parent.selectAll('.node')
+	.data(nodes)
+  .enter().append('circle')
+  	.attr('class', 'node')
+  	.attr("cx", function(d) { return d.x; })
+    .attr("cy", function(d) { return d.y; })
+    .attr("r", 8)
+    .style("fill", 'red')
+    .style("stroke", 'black')
+    .call(force.drag)
+    .on("mousedown", function() { d3.event.stopPropagation(); });
+
+d3.select("body")
+    .on("mousedown", mousedown);
+
+var r = 7;
+
+function tick(e) {
+
+  node.attr('cx', function(d) { return d.x = Math.max(r, Math.min(width - r, d.x)); })
+      .attr('cy', function(d) { return d.y = Math.max(r, Math.min(height - r, d.y)); });
+}
+
+function mousedown() {
+  nodes.forEach(function(o, i) {
+    o.x += (Math.random() - .5) * 40;
+    o.y += (Math.random() - .5) * 40;
+  });
+  force.resume();
+}
+
+// var child = parent.selectAll('svg')
+// 	.data(pages)
+// 	.enter().append('g')	// will hold both circle and text
+// 	.attr('id', function(d, i) {
+// 		return 'g' + i;
+// 	});
+
+
+// var cir = child.append('circle')
+// 	.attr('cx', function(s, i) { return xvals(i); })
+// 	.attr('cy', function(s, i) { return xvals(i); })
+// 	.attr('r', 10)
+// 	.attr('class', 'circle')
+// 	.attr('fill', '#377BA8')
+// 	.attr('stroke', 'black');
+
+// var caption = child.append('text')
+// 	.attr('x', function(d, i) {
+// 		//var c_loc = d3.mouse(d3.select(this.parentNode).select('.circle'));
+// 		//console.log(c_loc);
+// 		return xvals(i); 
+// 	})
+// 	.attr('y', function(d, i) { return xvals(i); })
+// 	.attr('dy', '.35em')
+// 	.attr('class', 'caption')
+// 	.style('opacity', 0)
+// 	.text(function(d) {return d; });
+
+// cir.on('mouseover', function(d) {
+// 	var xplace = d3.select(this).attr('cx');
+// 	var yplace = d3.select(this).attr('cy');
+// 	d3.select(this)
+// 		.transition()
+// 			.duration(500)
+// 			.attr('fill', 'white')
+// 			.attr('stroke', 'black');
+// 	d3.select(this.parentNode).select('.caption')
+// 		// first move the text close to the cursor (and the node)
+// 		.attr('x', function(d) {
+// 			var xplace2 = parseInt(xplace) + 20;
+// 			return xplace2;
+// 		})
+// 		.attr('y', function(d) { return yplace; })
+// 		// now change the opacity
+// 		.transition()
+// 			.duration(200)
+// 			.style('opacity', .8)
+// 			.text(d);
+//  });
+
+// cir.on('mouseout', function(d, i) {
+// 	d3.select(this).transition()
+// 		.duration(500)
+// 		.attr('fill', '#377BA8');
+// 	caption.transition()
+// 		.duration(500)
+// 		.style('opacity', 0);
+// });
 
 
 function xvals(i) {
@@ -116,6 +151,10 @@ d3.selectAll('circle').transition()
 	})
 	.duration(4000);
 
+// upon hitting 'Freeze', stop all circles
+d3.select('button').on('click', function() {
+
+})
 
 // Adjust SVG width and height every time window is resized
 window.addEventListener('resize', adjustSVG);
