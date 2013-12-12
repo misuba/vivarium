@@ -15,6 +15,10 @@ var parent = d3.select('.dataviz').append('svg')
 	.attr('width', (window.innerWidth * 0.29))
 	.attr('height', (window.innerHeight * 0.95));
 
+// tooltip
+d3.select('svg').append('text')
+	.attr('class', 'tooltip');
+
 // for force layout (includes margins)
 var width = (window.innerWidth * 0.29) - 20;
 var height = (window.innerHeight * 0.95) - 20;
@@ -42,6 +46,7 @@ function retrieveX(i) {
 	}
 }
 
+// todo: collapse retrieveX & Y into one function pretty soon
 function retrieveY(i) {
 	if(JSON.parse(localStorage.getItem(i)) !== null) {
 		var returned_y = JSON.parse(localStorage.getItem(i)).y;
@@ -67,11 +72,8 @@ function storeLocation(d) {
 	var node_x = d3.select(this).attr('cx'); 
 	var node_y = d3.select(this).attr('cy');
 	var node_i = d.index;
-	// localStorage.setItem();
 	var current = { index: node_i, x: node_x, y: node_y };
 	localStorage.setItem(d.index, JSON.stringify(current));
-	// console.log(JSON.parse(localStorage.getItem(d.index)))
-	// console.log(JSON.parse(localStorage.getItem(d.index)).x);
 }
 
 var child = parent.selectAll('svg')
@@ -85,6 +87,7 @@ var child = parent.selectAll('svg')
 	.attr('stroke', 'black')
 	.call(drag)
 	.on('mouseover', function(d) {
+		showTooltip(d);
 		d3.select(this).transition()
 			.duration(500)
 			.attr('fill', 'white');
@@ -93,6 +96,8 @@ var child = parent.selectAll('svg')
 		d3.select(this).transition()
 			.duration(500)
 			.attr('fill', '#377BA8');
+		d3.select('.tooltip')
+			.text('')
 	})
 	.on('click', function(d) { 
 		// checks to see if a drag just occurred
@@ -100,6 +105,13 @@ var child = parent.selectAll('svg')
 		// redirect to selected page
 		window.location.assign(d.url); 
 	});
+
+function showTooltip(d) {
+	d3.select('.tooltip')
+		.attr('x', parseInt(d3.event.pageX) - (parseInt(window.innerWidth) * 0.68))
+		.attr('y', parseInt(d3.event.pageY) - 30)
+		.text(d.name);
+}
 
 function dragmove(d) {
   d3.select(this)
