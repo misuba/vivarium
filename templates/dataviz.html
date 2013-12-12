@@ -8,7 +8,12 @@
 <script>
 
 // toy data
-var pages = ['Ishmael', 'Flask', 'Stubb', 'Starbuck']
+var pages = [
+	{name: 'Ishmael', size: 5, updated: 1}, 
+	{name: 'Flask', size: 2, updated: 3}, 
+	{name: 'Stubb', size: 2, updated: 8}, 
+	{name: 'Starbuck', size: 1, updated: 4}
+	]
 
 // create SVG element
 var parent = d3.select('.dataviz').append('svg')
@@ -29,9 +34,10 @@ var nodes = d3.range(pages.length)
 		return {
 			x: retrieveX(i),
 			y: retrieveY(i),
+			r: (parseInt(pages[i].size) * 10),
 			index: i, 
-			name: pages[i], 
-			url: 'http://localhost:5000/page/' + pages[i]
+			name: pages[i].name, 
+			url: 'http://localhost:5000/page/' + pages[i].name
 		};
 });
 
@@ -81,7 +87,7 @@ var child = parent.selectAll('svg')
 	.enter().append('circle')
 	.attr('cx', function(d) { return d.x; })
 	.attr('cy', function(d, i) { return d.y; })
-	.attr('r', 10)
+	.attr('r', function(d) { return d.r; })
 	.attr('class', 'circle')
 	.attr('fill', '#377BA8')
 	.attr('stroke', 'black')
@@ -166,9 +172,9 @@ function toggle(button) {
 			// create text elements for each node
 			d3.select('svg').append('text')
 				.attr('class', 'labels')
-				.attr('x', parseInt(locs[i][0]) + 20)
+				.attr('x', parseInt(locs[i][0]) + 25)
 				.attr('y', locs[i][1])
-				.text(pages[i]);
+				.text(pages[i].name);
 		}
 	}
 	else {
@@ -181,14 +187,6 @@ function toggle(button) {
 	}
 }
 
-// function labels(q) {
-// 	if(q === 'show') {
-// 		d3.selectAll(child)
-// 			.map(function(d, i) {
-// 				console.log(d + ' ' + i);
-// 			}
-// 	}
-// }
 
 // Adjust SVG width and height every time window is resized
 window.addEventListener('resize', adjustSVG);
