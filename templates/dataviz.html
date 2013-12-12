@@ -19,65 +19,93 @@ var parent = d3.select('.dataviz').append('svg')
 var width = (window.innerWidth * 0.29) - 20;
 var height = (window.innerHeight * 0.95) - 20;
 
-var nodes = d3.range(10).map(function(i) {
-	return {index: i};
+// create page nodes
+var nodes = d3.range(pages.length)
+	.map(function(d, i) {
+		return {
+			x: retrieveX(i),
+			y: retrieveY(i),
+			index: i, 
+			name: pages[i], 
+			url: 'http://localhost:5000/page/' + pages[i]
+		};
 });
-console.log(nodes);
 
-// force layout
-var force = d3.layout.force()
-	.nodes(nodes)
-	.size([width, height])
-	.on('tick', tick)
-	.gravity(0.0025)
-	.start();
+function retrieveX(i) {
+	if(JSON.parse(localStorage.getItem(i)) !== null) {
+		var returned_x = JSON.parse(localStorage.getItem(i)).x;
+		var name = JSON.parse(localStorage.getItem(i)).index;
+		return JSON.parse(localStorage.getItem(i)).x;
+	}
+	else {
+		return getRandomInt(0, width);
+	}
+}
 
-var node = parent.selectAll('.node')
+function retrieveY(i) {
+	if(JSON.parse(localStorage.getItem(i)) !== null) {
+		var returned_y = JSON.parse(localStorage.getItem(i)).y;
+		var name = JSON.parse(localStorage.getItem(i)).index;
+		return JSON.parse(localStorage.getItem(i)).y;
+	}
+	else {
+		return getRandomInt(0, width);
+	}
+}
+
+var drag = d3.behavior.drag()
+    .origin(Object)
+    .on('dragstart', function() {
+    	// prevents a dragend from triggering a click
+    	d3.event.sourceEvent.stopPropagation();
+    })
+    .on("drag", dragmove)
+    .on('dragend', storeLocation); //localStorage.setItem('testObject', testObject));
+
+// keeps nodes from appearing in a random place after each page refresh
+function storeLocation(d) {
+	var node_x = d3.select(this).attr('cx'); 
+	var node_y = d3.select(this).attr('cy');
+	var node_i = d.index;
+	// localStorage.setItem();
+	var current = { index: node_i, x: node_x, y: node_y };
+	localStorage.setItem(d.index, JSON.stringify(current));
+	// console.log(JSON.parse(localStorage.getItem(d.index)))
+	// console.log(JSON.parse(localStorage.getItem(d.index)).x);
+}
+
+var child = parent.selectAll('svg')
 	.data(nodes)
-  .enter().append('circle')
-  	.attr('class', 'node')
-  	.attr("cx", function(d) { return d.x; })
-    .attr("cy", function(d) { return d.y; })
-    .attr("r", 8)
-    .style("fill", 'red')
-    .style("stroke", 'black')
-    .call(force.drag)
-    .on("mousedown", function() { d3.event.stopPropagation(); });
+	.enter().append('circle')
+	.attr('cx', function(d) { return d.x; })
+	.attr('cy', function(d) { return d.y; })
+	.attr('r', 10)
+	.attr('class', 'circle')
+	.attr('fill', '#377BA8')
+	.attr('stroke', 'black')
+	.call(drag)
+	.on('mouseover', function(d) {
+		d3.select(this).transition()
+			.duration(500)
+			.attr('fill', 'white');
+	})
+	.on('mouseout', function(d) {
+		d3.select(this).transition()
+			.duration(500)
+			.attr('fill', '#377BA8');
+	})
+	.on('click', function(d) { 
+		// checks to see if a drag just occurred
+		if(d3.event.defaultPrevented) return;
+		// redirect to selected page
+		window.location.assign(d.url); 
+	});
 
-d3.select("body")
-    .on("mousedown", mousedown);
-
-var r = 7;
-
-function tick(e) {
-
-  node.attr('cx', function(d) { return d.x = Math.max(r, Math.min(width - r, d.x)); })
-      .attr('cy', function(d) { return d.y = Math.max(r, Math.min(height - r, d.y)); });
+function dragmove(d) {
+  d3.select(this)
+      .attr("cx", d.x = Math.max(10, Math.min(width - 10, d3.event.x)))
+      .attr("cy", d.y = Math.max(10, Math.min(height - 10, d3.event.y)));
 }
-
-function mousedown() {
-  nodes.forEach(function(o, i) {
-    o.x += (Math.random() - .5) * 40;
-    o.y += (Math.random() - .5) * 40;
-  });
-  force.resume();
-}
-
-// var child = parent.selectAll('svg')
-// 	.data(pages)
-// 	.enter().append('g')	// will hold both circle and text
-// 	.attr('id', function(d, i) {
-// 		return 'g' + i;
-// 	});
-
-
-// var cir = child.append('circle')
-// 	.attr('cx', function(s, i) { return xvals(i); })
-// 	.attr('cy', function(s, i) { return xvals(i); })
-// 	.attr('r', 10)
-// 	.attr('class', 'circle')
-// 	.attr('fill', '#377BA8')
-// 	.attr('stroke', 'black');
 
 // var caption = child.append('text')
 // 	.attr('x', function(d, i) {
@@ -141,15 +169,15 @@ var line = d3.svg.line()
 	.y(function(d) {return d.y; })
 	.interpolate('basis');
 
-d3.selectAll('circle').transition()
-	.ease('linear')
-	.attr('cy', function() {
-		return getRandomInt(0, (window.innerHeight * 0.95));
-	})
-	.attr('cx', function() {
-		return getRandomInt(0, (window.innerWidth * 0.29));
-	})
-	.duration(4000);
+// d3.selectAll('circle').transition()
+// 	.ease('linear')
+// 	.attr('cy', function() {
+// 		return getRandomInt(0, (window.innerHeight * 0.95));
+// 	})
+// 	.attr('cx', function() {
+// 		return getRandomInt(0, (window.innerWidth * 0.29));
+// 	})
+// 	.duration(4000);
 
 // upon hitting 'Freeze', stop all circles
 d3.select('button').on('click', function() {
