@@ -1,8 +1,8 @@
 <div class="dataviz">
 
-<!-- if the motion gets too annoying: a freeze button -->
-<!-- currently does nothing lol -->
-<div style="float: right;"> <button>Freeze</button>
+<!-- Show all labels -->
+<div style="float: right;"> 
+	<input id='showall' type='button' style="height:2em; width: 6em" value='Show All' onclick="toggle('showall')">
 </div>
 
 <script>
@@ -80,7 +80,7 @@ var child = parent.selectAll('svg')
 	.data(nodes)
 	.enter().append('circle')
 	.attr('cx', function(d) { return d.x; })
-	.attr('cy', function(d) { return d.y; })
+	.attr('cy', function(d, i) { return d.y; })
 	.attr('r', 10)
 	.attr('class', 'circle')
 	.attr('fill', '#377BA8')
@@ -106,6 +106,8 @@ var child = parent.selectAll('svg')
 		window.location.assign(d.url); 
 	});
 
+child.each(storeLocation);
+
 function showTooltip(d) {
 	d3.select('.tooltip')
 		.attr('x', parseInt(d3.event.pageX) - (parseInt(window.innerWidth) * 0.68))
@@ -118,50 +120,6 @@ function dragmove(d) {
       .attr("cx", d.x = Math.max(10, Math.min(width - 10, d3.event.x)))
       .attr("cy", d.y = Math.max(10, Math.min(height - 10, d3.event.y)));
 }
-
-// var caption = child.append('text')
-// 	.attr('x', function(d, i) {
-// 		//var c_loc = d3.mouse(d3.select(this.parentNode).select('.circle'));
-// 		//console.log(c_loc);
-// 		return xvals(i); 
-// 	})
-// 	.attr('y', function(d, i) { return xvals(i); })
-// 	.attr('dy', '.35em')
-// 	.attr('class', 'caption')
-// 	.style('opacity', 0)
-// 	.text(function(d) {return d; });
-
-// cir.on('mouseover', function(d) {
-// 	var xplace = d3.select(this).attr('cx');
-// 	var yplace = d3.select(this).attr('cy');
-// 	d3.select(this)
-// 		.transition()
-// 			.duration(500)
-// 			.attr('fill', 'white')
-// 			.attr('stroke', 'black');
-// 	d3.select(this.parentNode).select('.caption')
-// 		// first move the text close to the cursor (and the node)
-// 		.attr('x', function(d) {
-// 			var xplace2 = parseInt(xplace) + 20;
-// 			return xplace2;
-// 		})
-// 		.attr('y', function(d) { return yplace; })
-// 		// now change the opacity
-// 		.transition()
-// 			.duration(200)
-// 			.style('opacity', .8)
-// 			.text(d);
-//  });
-
-// cir.on('mouseout', function(d, i) {
-// 	d3.select(this).transition()
-// 		.duration(500)
-// 		.attr('fill', '#377BA8');
-// 	caption.transition()
-// 		.duration(500)
-// 		.style('opacity', 0);
-// });
-
 
 function xvals(i) {
 	var x = [10, 30, 60, 100];
@@ -191,10 +149,46 @@ var line = d3.svg.line()
 // 	})
 // 	.duration(4000);
 
-// upon hitting 'Freeze', stop all circles
-d3.select('button').on('click', function() {
+function toggle(button) {
+	var a = document.getElementById(button);
+	if(a.value === 'Show All') {
+		var locs = [];
+		a.value = "Hide";
+		// get coordinates for all labels
+		d3.range(pages.length)
+			.map(function(d, i) {
+				var stored_x = JSON.parse(localStorage.getItem(i)).x;
+				var stored_y = JSON.parse(localStorage.getItem(i)).y;
+				var stored_i = JSON.parse(localStorage.getItem(i)).index;
+				locs.push([stored_x, stored_y, stored_i]);
+			});
+		for(i=0; i < locs.length; i++) {
+			// create text elements for each node
+			d3.select('svg').append('text')
+				.attr('class', 'labels')
+				.attr('x', parseInt(locs[i][0]) + 20)
+				.attr('y', locs[i][1])
+				.text(pages[i]);
+		}
+	}
+	else {
+		a.value = "Show All";
+		var labels = document.getElementsByClassName('labels');
+		while(labels[0]) {
+			labels[0].parentNode.removeChild(labels[0]);
+		}
+		//labels('hide');
+	}
+}
 
-})
+// function labels(q) {
+// 	if(q === 'show') {
+// 		d3.selectAll(child)
+// 			.map(function(d, i) {
+// 				console.log(d + ' ' + i);
+// 			}
+// 	}
+// }
 
 // Adjust SVG width and height every time window is resized
 window.addEventListener('resize', adjustSVG);
